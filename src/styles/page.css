@@ -1,0 +1,256 @@
+@reference "tailwindcss";
+
+/* Layout */
+.chat-container {
+  @apply flex bg-gradient-to-br from-[#1a1e24] to-[#1e2329] text-white;
+  height: 100vh; /* Fallback */
+  height: 100dvh; /* Dynamic viewport height */
+}
+
+.chat-main {
+  @apply flex-1 flex flex-col;
+  position: relative;
+  /* Important for proper mobile height calculation */
+  height: 100vh;
+  height: 100dvh;
+}
+
+.chat-header {
+  @apply p-4 sm:p-8 border-b border-[#2c313a]/80 flex items-center bg-gradient-to-r from-[#1a1e24]/50 to-[#1e2329]/50;
+}
+
+/* Mobile header adjustments */
+@media (max-width: 640px) {
+  .chat-header {
+    @apply pl-16; /* Make room for the menu button */
+  }
+}
+
+.title-group {
+  @apply flex items-center gap-2;
+}
+
+.chat-title {
+  @apply text-xl sm:text-2xl font-medium tracking-tight text-gray-100;
+}
+
+/* Message Container */
+.message-container {
+  @apply flex-1 overflow-y-auto py-6 sm:py-10 px-4 sm:px-10 bg-gradient-to-b from-[#1a1e24]/30 to-[#1e2329]/30;
+}
+
+.message-wrapper {
+  @apply mb-6 sm:mb-8 flex items-start;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-content-wrapper {
+  @apply flex-1 flex flex-col;
+}
+
+.message-content {
+  @apply inline-block text-gray-200 p-3 sm:p-5 rounded-lg w-fit max-w-[95%] sm:max-w-[85%] text-[16px] sm:text-[17px] shadow-sm;
+}
+
+.message-sender {
+  @apply text-gray-400 text-[15px] sm:text-[15px] mb-2 sm:mb-3 font-medium;
+}
+
+/* Avatars */
+.user-avatar {
+  @apply w-8 h-8 sm:w-12 sm:h-12 rounded-full mr-3 sm:mr-5 flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-700 flex-shrink-0 shadow-md;
+}
+
+.user-avatar-icon {
+  @apply w-4 h-4 sm:w-6 sm:h-6 text-white;
+}
+
+.ai-avatar {
+  @apply w-8 h-8 sm:w-12 sm:h-12 rounded-full mr-3 sm:mr-5 flex items-center justify-center bg-gradient-to-br from-purple-600 to-purple-700 flex-shrink-0 text-white text-sm sm:text-base font-bold shadow-md;
+}
+
+.ai-avatar-text {
+  @apply text-white text-sm sm:text-base font-bold;
+}
+
+/* Message Backgrounds */
+.user-message-bg {
+  @apply bg-gradient-to-br from-[#2c313a]/80 to-[#2c313a]/60 border border-[#3a404b]/20;
+}
+
+.ai-message-bg {
+  @apply bg-gradient-to-br from-[#343a46]/80 to-[#343a46]/60 border border-[#4a5061]/20;
+}
+
+/* Thinking Indicator */
+.thinking-row {
+  @apply flex items-center gap-1 px-2 sm:px-4 py-2;
+}
+
+.typing-indicator {
+  @apply flex items-center gap-1 bg-gradient-to-r from-[#2c313a]/80 to-[#2c313a]/60 px-2 sm:px-3 py-1.5 sm:py-2 rounded-2xl border border-[#3a404b]/20;
+}
+
+.typing-indicator span {
+  @apply w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gray-400;
+  animation: bounce 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Input Area */
+.input-area {
+  @apply px-4 sm:pl-27 sm:pr-10 py-4 sm:py-6 border-t border-[#2c313a]/80 flex items-center bg-gradient-to-r from-[#1a1e24]/70 to-[#1e2329]/70;
+}
+
+.input-form {
+  @apply flex items-center w-full max-w-5xl mx-auto;
+}
+
+.input-field {
+  @apply bg-gradient-to-r from-[#2c313a] to-[#2e333d] rounded-xl sm:rounded-2xl px-4 sm:px-8 py-3 sm:py-5 outline-none focus:ring-1 focus:ring-blue-500/70 focus:border-blue-500/50 transition-all text-[15px] sm:text-[17px] tracking-wide font-normal w-full h-12 sm:h-14 border border-[#3a404b]/30;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.input-field:focus {
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+}
+
+.submit-button {
+  @apply bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 transition-all rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center disabled:opacity-50 ml-2 sm:ml-4 self-center shadow-md;
+}
+
+.submit-icon {
+  @apply w-5 h-5 sm:w-6 sm:h-6 text-white;
+}
+
+/* States */
+.empty-state {
+  @apply flex items-center justify-center h-full text-gray-400 text-[15px] sm:text-[17px] font-medium tracking-wide px-4 text-center;
+}
+
+.loading-state {
+  @apply flex items-center justify-center h-screen bg-gradient-to-br from-[#1a1e24] to-[#1e2329] text-white;
+}
+
+/* Delete Button */
+.delete-button {
+  @apply p-0.5 text-gray-400/80 hover:text-red-400 transition-colors rounded-full cursor-pointer;
+}
+
+.delete-icon {
+  @apply w-4 h-4 sm:w-5 sm:h-5;
+}
+
+/* Mobile Specific */
+@media (max-width: 640px) {
+  html {
+    height: -webkit-fill-available;
+  }
+
+  body {
+    height: 100%;
+  }
+
+  .chat-container {
+    overflow: hidden;
+    /* Allow chat container to use full viewport */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh; /* Standard height for most browsers */
+    height: -webkit-fill-available; /* For iOS Safari */
+    height: 100dvh; /* Dynamic viewport height when supported */
+  }
+
+  .chat-main {
+    width: 100%;
+    /* Main container fills the viewport */
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    /* Explicitly set height to prevent layout shifts */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chat-header {
+    flex-shrink: 0;
+  }
+
+  .message-container {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 1rem;
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0));
+    will-change: transform;
+  }
+
+  .input-area {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.75rem 1rem;
+    background-image: linear-gradient(to right, #1a1e24, #1e2329);
+    border-top: 1px solid #2c313a;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
+    min-height: 60px;
+    transform: translateZ(0);
+    box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .input-form {
+    @apply w-full;
+    height: 100%;
+  }
+
+  .message-content {
+    @apply break-words leading-relaxed;
+  }
+
+  .markdown-content {
+    @apply text-[16px] leading-relaxed;
+  }
+
+  .markdown-content pre {
+    @apply max-w-[calc(100vw-3rem)] overflow-x-auto text-[14px];
+  }
+}

@@ -1,0 +1,121 @@
+@reference "tailwindcss";
+
+.sidebar {
+  @apply w-80 border-r border-[#2c313a]/80 flex flex-col pt-2 bg-gradient-to-b from-[#1a1e24] to-[#1c2026];
+}
+
+/* Mobile Sidebar */
+@media (max-width: 640px) {
+  .sidebar {
+    @apply fixed top-0 left-0 bottom-0 z-50 w-[280px] transform -translate-x-full transition-transform duration-300 ease-in-out;
+  }
+
+  .sidebar.open {
+    @apply translate-x-0;
+  }
+
+  /* Overlay when sidebar is open */
+  .sidebar-overlay {
+    @apply fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300;
+  }
+
+  .sidebar-overlay.active {
+    @apply opacity-100 pointer-events-auto;
+  }
+}
+
+.sidebar-header {
+  @apply px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between border-b border-[#2c313a]/80 bg-gradient-to-r from-[#1e232a] to-[#20252d];
+}
+
+.sidebar-title {
+  @apply text-lg sm:text-xl font-semibold tracking-tight text-gray-100;
+}
+
+.new-chat-button {
+  @apply w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-sm hover:from-blue-500 hover:to-blue-600 transition-colors cursor-pointer;
+}
+
+.new-chat-icon {
+  @apply w-3.5 h-3.5 sm:w-4 sm:h-4 text-white;
+}
+
+/* Mobile Menu Button */
+.mobile-menu-button {
+  @apply fixed top-2.5 left-4 z-50 w-10 h-10 rounded-lg bg-gradient-to-br from-[#2c313a] to-[#2e333d] border border-[#3a404b]/30 flex items-center justify-center sm:hidden;
+}
+
+.mobile-menu-icon {
+  @apply w-5 h-5 text-gray-300;
+}
+
+.chat-list {
+  @apply flex-1 overflow-y-auto px-2 pt-4;
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+}
+
+.chat-list::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari and Opera */
+}
+
+.chat-list:hover::-webkit-scrollbar {
+  display: block; /* Show scrollbar on hover */
+  width: 6px;
+}
+
+.chat-list:hover {
+  scrollbar-width: thin; /* For Firefox */
+}
+
+.chat-item {
+  @apply flex items-center px-4 sm:px-6 py-3 sm:py-4 w-full text-left hover:bg-gradient-to-r hover:from-[#2c313a]/90 hover:to-[#2c313a]/70 transition-all rounded-lg my-1 border border-transparent hover:border-[#3a404b]/20;
+}
+
+.chat-item-active {
+  @apply bg-gradient-to-r from-[#2c313a] to-[#2e333d] border-[#3a404b]/30;
+}
+
+.chat-item-text {
+  @apply truncate text-sm sm:text-base tracking-wide;
+}
+
+.chat-item-text-active {
+  @apply text-white font-medium;
+}
+
+.chat-item-text-inactive {
+  @apply text-gray-300;
+}
+
+.chat-item:hover .chat-item-text-inactive {
+  color: white;
+}
+
+.empty-chats {
+  @apply px-4 sm:px-6 py-3 text-gray-400 text-sm italic;
+}
+
+.sidebar-footer {
+  @apply py-3 sm:py-4 px-4 sm:px-6 border-t border-[#2c313a]/80 bg-gradient-to-r from-[#1e232a] to-[#20252d];
+}
+
+.ai-status {
+  @apply opacity-80;
+}
+
+.ai-status-indicator {
+  @apply flex items-center;
+}
+
+.ai-status-dot {
+  @apply w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gradient-to-r from-green-500 to-green-400 mr-2 shadow-sm shadow-green-500/20;
+}
+
+.ai-status-text {
+  @apply text-sm sm:text-base text-gray-300;
+}
+
+.ai-status-subtext {
+  @apply text-xs text-gray-500 mt-1 ml-4;
+}
