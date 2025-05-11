@@ -73,6 +73,25 @@ export default function Chat() {
     [navigateToChat, initializeNewChat, fetchedChats],
   )
 
+  const generateTitle = async (message) => {
+    try {
+      const response = await fetch('/api/generate-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      })
+
+      if (!response.ok) throw new Error('Failed to generate title')
+
+      const { title } = await response.json()
+      if (title && currentChatId) {
+        await updateChatTitle(currentChatId, title)
+      }
+    } catch (error) {
+      console.error('Error generating title', error)
+    }
+  }
+
   useEffect(() => {
     if (!fetchedChats) return
 
@@ -104,7 +123,11 @@ export default function Chat() {
 
     if (!input.trim()) return
 
+    const isFirstMessage = (await getChatMessages(currentChatId)).length === 0
+
     await saveMessage(currentChatId, 'user', input)
+
+    if (isFirstMessage) generateTitle(input)
 
     handleSubmit()
   }
