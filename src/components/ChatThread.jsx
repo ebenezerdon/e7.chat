@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown'
 const Message = ({ role, content }) => (
   <div className="message-wrapper">
     {role === 'user' ? (
-      <div className="user-avater">
+      <div className="user-avatar">
         <User className="user-avatar-icon" strokeWidth={1.5} />
       </div>
     ) : (
@@ -14,11 +14,10 @@ const Message = ({ role, content }) => (
       <span className="message-sender">
         {role === 'user' ? 'You' : 'AI Assistant'}
       </span>
-
       <div
         className={`message-content ${
           role === 'user' ? 'user-message-bg' : 'ai-message-bg'
-        } `}
+        }`}
       >
         <div className="markdown-content">
           <ReactMarkdown>{content}</ReactMarkdown>
@@ -39,13 +38,13 @@ const ChatThread = ({ messages, status, chatThreadRef }) => {
       {messages.length === 0 ? (
         <Message {...welcomeMessage} />
       ) : (
-        messages.map((message, index) => <Message key={index} {...messages} />)
+        messages.map((message, index) => <Message key={index} {...message} />)
       )}
 
       {status === 'submitted' && (
         <div className="thinking-row">
           <div className="ai-avatar">AI</div>
-          <div className="typing-indictor">
+          <div className="typing-indicator">
             <span></span>
             <span></span>
             <span></span>
