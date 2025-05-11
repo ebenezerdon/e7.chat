@@ -7,12 +7,11 @@ db.version(1).stores({
   messages: '++id, chatId, role, content, createdAt',
 })
 
-export const createChat = (title = 'New Chat') => {
+export const createChat = (title = 'New Chat') =>
   db.chats.add({
     title,
     createdAt: new Date().toISOString(),
   })
-}
 
 export const getChat = async (id) => db.chats.get(Number(id))
 
