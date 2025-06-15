@@ -6,9 +6,13 @@ export const maxDuration = 30
 export async function POST(req) {
   const { messages } = await req.json()
 
+  // const openai = createOpenAI({
+  //   baseURL: 'https://models.inference.ai.azure.com',
+  //   apiKey: process.env.GITHUB_TOKEN,
+  // })
+
   const openai = createOpenAI({
-    baseURL: 'https://models.inference.ai.azure.com',
-    apiKey: process.env.GITHUB_TOKEN,
+    apiKey: process.env.OPENAI_API_KEY,
   })
 
   const result = streamText({

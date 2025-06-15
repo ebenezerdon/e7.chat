@@ -4,9 +4,15 @@ import { NextResponse } from 'next/server'
 
 export const runtime = 'edge'
 
+// GitHub Models configuration (commented out)
+// const openai = createOpenAI({
+//   baseURL: 'https://models.inference.ai.azure.com',
+//   apiKey: process.env.GITHUB_TOKEN,
+// })
+
+// Direct OpenAI configuration
 const openai = createOpenAI({
-  baseURL: 'https://models.inference.ai.azure.com',
-  apiKey: process.env.GITHUB_TOKEN,
+  apiKey: process.env.OPENAI_API_KEY,
 })
 
 export async function POST(req) {
