@@ -11,9 +11,8 @@ import {
   getChat,
   getChats,
   syncToCloud,
-} from '../lib/hybrid-db'
+} from '../lib/db'
 import { useRouter } from 'next/navigation'
-import { useLiveQuery } from 'dexie-react-hooks'
 import { SendHorizontal, MinusCircle, LogIn } from 'lucide-react'
 import ChatThread from '@/components/ChatThread'
 import '../styles/page.css'
@@ -21,7 +20,6 @@ import Sidebar from '@/components/Sidebar'
 import { useAuth } from '../lib/auth'
 import AuthModal from '@/components/AuthModal'
 import UserMenu from '@/components/UserMenu'
-import { db } from '../lib/db'
 
 export default function Chat() {
   const router = useRouter()
@@ -31,15 +29,10 @@ export default function Chat() {
   const [currentChatId, setCurrentChatId] = useState(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [chatsData, setChatsData] = useState([])
+  const [currentChat, setCurrentChat] = useState(null)
+  const [chatsLoading, setChatsLoading] = useState(true)
 
-  const fetchedChats = useLiveQuery(() =>
-    db.chats.orderBy('createdAt').reverse().toArray(),
-  )
-
-  const currentChat = useLiveQuery(
-    () => db.chats.get(Number(currentChatId)),
-    [currentChatId],
-  )
+  const fetchedChats = chatsData
 
   const {
     messages,
@@ -50,36 +43,31 @@ export default function Chat() {
     status,
   } = useChat({
     onFinish: async (message) => {
-      if (currentChatId && message.role === 'assistant') {
-        await saveMessage(user, currentChatId, message.role, message.content)
+      if (currentChatId && message.role === 'assistant' && user) {
+        try {
+          await saveMessage(user, currentChatId, message.role, message.content)
+        } catch (error) {
+          console.error('Failed to save assistant message:', error)
+        }
       }
     },
   })
 
-  const navigateToChat = useCallback(
-    (chatId) => {
-      router.push(`/?chatId=${chatId}`)
-      setCurrentChatId(chatId)
-    },
-    [router],
-  )
-
   const initializeNewChat = useCallback(async () => {
-    const result = await createChat(user)
-    navigateToChat(result.localId)
-  }, [navigateToChat, user])
+    if (!user) {
+      setShowAuthModal(true)
+      return
+    }
 
-  const setActiveChat = useCallback(
-    async (requestedChatId = null) => {
-      if (fetchedChats && fetchedChats?.length === 0) {
-        return initializeNewChat()
-      }
-
-      if (requestedChatId) navigateToChat(Number(requestedChatId))
-      else navigateToChat(fetchedChats?.[0].id)
-    },
-    [navigateToChat, initializeNewChat, fetchedChats],
-  )
+    try {
+      const result = await createChat(user)
+      setCurrentChatId(result.$id)
+      router.push(`/?chatId=${result.$id}`)
+      await loadChats() // Refresh the chats list
+    } catch (error) {
+      console.error('Failed to create chat:', error)
+    }
+  }, [user, router])
 
   const generateTitle = async (message) => {
     try {
@@ -94,48 +82,115 @@ export default function Chat() {
       const { title } = await response.json()
       if (title && currentChatId) {
         await updateChatTitle(user, currentChatId, title)
+
+        // Update local state to reflect the new title immediately
+        setCurrentChat((prev) => (prev ? { ...prev, title } : null))
+
+        // Also update the chats list to show the new title in sidebar
+        setChatsData((prev) =>
+          prev.map((chat) =>
+            chat.$id === currentChatId ? { ...chat, title } : chat,
+          ),
+        )
       }
     } catch (error) {
       console.error('Error generating title', error)
     }
   }
 
-  // Sync with cloud when user logs in
-  useEffect(() => {
-    if (user && !loading) {
-      syncToCloud(user)
-      loadChats()
-    }
-  }, [user, loading])
-
   const loadChats = useCallback(async () => {
+    if (!user) {
+      setChatsData([])
+      setChatsLoading(false)
+      return
+    }
+
     try {
+      setChatsLoading(true)
       const chats = await getChats(user)
       setChatsData(chats)
     } catch (error) {
       console.error('Failed to load chats:', error)
+      setChatsData([])
+    } finally {
+      setChatsLoading(false)
     }
   }, [user])
 
-  useEffect(() => {
-    if (!fetchedChats) return
-
-    if (!currentChatId) {
-      const chatId = new URLSearchParams(window.location.search).get('chatId')
-      setActiveChat(chatId)
+  const loadCurrentChat = useCallback(async () => {
+    if (!user || !currentChatId) {
+      setCurrentChat(null)
+      return
     }
 
+    try {
+      const chat = await getChat(user, currentChatId)
+      setCurrentChat(chat)
+    } catch (error) {
+      console.error('Failed to load current chat:', error)
+      setCurrentChat(null)
+    }
+  }, [user, currentChatId])
+
+  // Load chats when user logs in or out
+  useEffect(() => {
+    loadChats()
+  }, [loadChats])
+
+  // Load current chat details when currentChatId changes
+  useEffect(() => {
+    loadCurrentChat()
+  }, [loadCurrentChat])
+
+  // Handle initial chat selection from URL
+  useEffect(() => {
+    if (!user) return
+
+    const chatId = new URLSearchParams(window.location.search).get('chatId')
+
+    if (chatId && chatsData.length > 0) {
+      // Check if the requested chat exists
+      const chatExists = chatsData.find((chat) => chat.$id === chatId)
+      if (chatExists) {
+        setCurrentChatId(chatId)
+      } else {
+        // Chat doesn't exist, redirect to first available chat or create new one
+        if (chatsData.length > 0) {
+          router.push(`/?chatId=${chatsData[0].$id}`)
+          setCurrentChatId(chatsData[0].$id)
+        } else {
+          initializeNewChat()
+        }
+      }
+    } else if (!chatId && chatsData.length > 0) {
+      // No chat specified, go to first available
+      router.push(`/?chatId=${chatsData[0].$id}`)
+      setCurrentChatId(chatsData[0].$id)
+    } else if (!chatId && chatsData.length === 0 && !chatsLoading) {
+      // No chats exist, create a new one
+      initializeNewChat()
+    }
+  }, [user, chatsData, chatsLoading, router, initializeNewChat])
+
+  // Load messages when currentChatId changes
+  useEffect(() => {
     const loadChatMessages = async () => {
+      if (!user || !currentChatId) {
+        setMessages([])
+        return
+      }
+
       try {
         const loadedMessages = await getChatMessages(user, currentChatId)
         setMessages(loadedMessages)
       } catch (error) {
         console.error('Failed to load messages', error)
+        setMessages([])
       }
     }
 
     loadChatMessages()
-  }, [fetchedChats, currentChatId, setActiveChat, setMessages, user])
+  }, [user, currentChatId, setMessages])
 
   useEffect(() => {
     if (chatThreadRef.current && messages.length > 0) {
@@ -148,28 +203,66 @@ export default function Chat() {
 
     if (!input.trim()) return
 
-    const isFirstMessage =
-      (await getChatMessages(user, currentChatId)).length === 0
+    if (!user) {
+      setShowAuthModal(true)
+      return
+    }
 
-    await saveMessage(user, currentChatId, 'user', input)
+    if (!currentChatId) {
+      console.error('No current chat ID available')
+      return
+    }
 
-    if (isFirstMessage) generateTitle(input)
+    try {
+      const isFirstMessage =
+        (await getChatMessages(user, currentChatId)).length === 0
 
-    handleSubmit()
+      await saveMessage(user, currentChatId, 'user', input)
+
+      if (isFirstMessage) generateTitle(input)
+
+      handleSubmit()
+    } catch (error) {
+      console.error('Failed to save user message:', error)
+      alert('Failed to send message. Please try again.')
+    }
   }
 
   const handleDeleteChat = useCallback(async () => {
-    if (!currentChatId) return
+    if (!currentChatId || !user) return
 
     if (window.confirm('Are you sure you want to delete this chat?')) {
-      await deleteChat(user, currentChatId)
-      router.push('/')
-      setCurrentChatId(null)
-    }
-  }, [currentChatId, router, user])
+      try {
+        await deleteChat(user, currentChatId)
 
-  if (!fetchedChats) {
+        // Refresh the chats list
+        await loadChats()
+
+        // Navigate to first available chat or home
+        const updatedChats = await getChats(user)
+        if (updatedChats.length > 0) {
+          router.push(`/?chatId=${updatedChats[0].$id}`)
+          setCurrentChatId(updatedChats[0].$id)
+        } else {
+          router.push('/')
+          setCurrentChatId(null)
+        }
+      } catch (error) {
+        console.error('Failed to delete chat:', error)
+        alert(
+          'Failed to delete chat. Please check your connection and try again.',
+        )
+      }
+    }
+  }, [currentChatId, user, router, loadChats])
+
+  if (chatsLoading) {
     return <div className="loading-state">Loading...</div>
+  }
+
+  const handleChatSelect = (chatId) => {
+    setCurrentChatId(chatId)
+    router.push(`/?chatId=${chatId}`)
   }
 
   return (
@@ -177,7 +270,7 @@ export default function Chat() {
       <Sidebar
         fetchedChats={fetchedChats}
         currentChatId={currentChatId}
-        setCurrentChatId={setCurrentChatId}
+        setCurrentChatId={handleChatSelect}
         initializeNewChat={initializeNewChat}
       />
       <div className="chat-main">
