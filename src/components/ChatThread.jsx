@@ -1,7 +1,7 @@
 import { User } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
-const Message = ({ role, content }) => (
+const Message = ({ role, content, isSaving }) => (
   <div className="message-wrapper">
     {role === 'user' ? (
       <div className="user-avatar">
@@ -13,6 +13,11 @@ const Message = ({ role, content }) => (
     <div className="message-content-wrapper">
       <span className="message-sender">
         {role === 'user' ? 'You' : 'AI Assistant'}
+        {isSaving && (
+          <span className="saving-indicator" title="Saving message...">
+            ●
+          </span>
+        )}
       </span>
       <div
         className={`message-content ${
@@ -27,7 +32,12 @@ const Message = ({ role, content }) => (
   </div>
 )
 
-const ChatThread = ({ messages, status, chatThreadRef }) => {
+const ChatThread = ({
+  messages,
+  status,
+  chatThreadRef,
+  savingMessages = new Set(),
+}) => {
   const welcomeMessage = {
     role: 'assistant',
     content: "👋 Hello! I'm Lexi, your AI assistant. How can I help you?",
@@ -38,7 +48,13 @@ const ChatThread = ({ messages, status, chatThreadRef }) => {
       {messages.length === 0 ? (
         <Message {...welcomeMessage} />
       ) : (
-        messages.map((message, index) => <Message key={index} {...message} />)
+        messages.map((message, index) => (
+          <Message
+            key={message.id || index}
+            {...message}
+            isSaving={savingMessages.has(message.id || index)}
+          />
+        ))
       )}
 
       {status === 'submitted' && (
