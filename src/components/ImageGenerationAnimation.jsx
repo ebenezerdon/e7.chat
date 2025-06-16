@@ -1,30 +1,24 @@
 import { useState, useEffect } from 'react'
 
 const ImageGenerationAnimation = ({ prompt }) => {
-  const [progress, setProgress] = useState(0)
   const [noiseOffset, setNoiseOffset] = useState(0)
+  const [blurCycle, setBlurCycle] = useState(0)
 
   useEffect(() => {
-    const startTime = Date.now()
-    const duration = 10000 // 10 seconds
-
     const animate = () => {
-      const elapsed = Date.now() - startTime
-      const currentProgress = Math.min(elapsed / duration, 1)
-
-      setProgress(currentProgress)
       setNoiseOffset((prev) => prev + 0.1) // Slow noise animation
+      setBlurCycle((prev) => prev + 0.02) // Blur oscillation
 
-      if (currentProgress < 1) {
-        requestAnimationFrame(animate)
-      }
+      requestAnimationFrame(animate)
     }
 
-    animate()
+    const animationId = requestAnimationFrame(animate)
+
+    return () => cancelAnimationFrame(animationId)
   }, [])
 
-  // Blur decreases from 15px to 0px
-  const blurAmount = Math.max(15 - progress * 15, 0)
+  // More obvious oscillating blur between 15px and 25px
+  const blurAmount = 20 + Math.sin(blurCycle) * 5
 
   // Simple realistic image with animated noise
   const placeholderImage = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E
@@ -41,7 +35,7 @@ const ImageGenerationAnimation = ({ prompt }) => {
       %3C/filter%3E
     %3C/defs%3E
     %3Crect width='400' height='400' fill='url(%23bg)' /%3E
-    %3Crect width='400' height='400' fill='white' filter='url(%23noise)' opacity='0.3' mix-blend-mode='overlay' /%3E
+    %3Crect width='400' height='400' fill='white' filter='url(%23noise)' opacity='0.4' mix-blend-mode='overlay' /%3E
   %3C/svg%3E`
 
   return (
