@@ -158,7 +158,7 @@
 
 /* Input Area */
 .input-area {
-  @apply px-4 sm:pl-27 sm:pr-10 py-4 sm:py-6 border-t border-[#2c313a]/80 flex items-center bg-gradient-to-r from-[#1a1e24]/70 to-[#1e2329]/70;
+  @apply px-4 sm:pl-27 sm:pr-10 py-4 sm:py-6 border-t border-[#2c313a]/80 flex flex-col bg-gradient-to-r from-[#1a1e24]/70 to-[#1e2329]/70;
 }
 
 .input-form {
@@ -198,6 +198,211 @@
 
 .delete-icon {
   @apply w-4 h-4 sm:w-5 sm:h-5;
+}
+
+/* Input Mode Selector */
+.input-mode-selector {
+  @apply flex bg-[#2c313a]/50 rounded-lg p-1 mb-3 w-fit mx-auto border border-[#3a404b]/30;
+}
+
+.mode-button {
+  @apply px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer;
+}
+
+.mode-button:not(.active) {
+  @apply text-gray-400 hover:text-gray-200 hover:bg-[#3a404b]/30;
+}
+
+.mode-button.active {
+  @apply bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-sm;
+}
+
+/* Image Generator */
+.image-generator {
+  @apply w-full max-w-5xl mx-auto;
+}
+
+.image-form {
+  @apply w-full;
+}
+
+.image-input-wrapper {
+  @apply flex items-center gap-3 bg-gradient-to-r from-[#2c313a] to-[#2e333d] rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-[#3a404b]/30;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.image-icon {
+  @apply text-gray-400 flex-shrink-0;
+}
+
+.image-input {
+  @apply bg-transparent outline-none text-[15px] sm:text-[17px] tracking-wide font-normal w-full text-gray-200 placeholder-gray-400;
+}
+
+.generate-button {
+  @apply bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 transition-all rounded-lg px-4 py-2 flex items-center gap-2 disabled:opacity-50 text-white text-sm font-medium shadow-md;
+}
+
+.loading-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-message {
+  @apply mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-lg;
+}
+
+.error-message p {
+  @apply text-red-400 text-sm;
+}
+
+/* Generated Image Display */
+.generated-image-preview {
+  @apply mt-4 p-4 bg-[#2c313a]/50 rounded-xl border border-[#3a404b]/30;
+}
+
+.generated-image-display {
+  @apply mt-4 p-4 bg-[#2c313a]/30 rounded-lg border border-[#3a404b]/20;
+}
+
+.preview-image,
+.chat-generated-image {
+  @apply w-full max-w-md mx-auto rounded-lg shadow-lg border border-[#3a404b]/30;
+}
+
+.chat-generated-image {
+  @apply max-w-sm;
+}
+
+.image-actions {
+  @apply flex items-center justify-center gap-2 mt-3;
+}
+
+.download-button {
+  @apply bg-[#3a404b]/50 hover:bg-[#3a404b]/70 transition-all duration-300 rounded-lg px-3 py-2 text-gray-200 text-sm border border-[#4a5061]/30 cursor-pointer relative overflow-hidden;
+  min-width: 120px;
+  min-height: 36px;
+}
+
+.download-button-content {
+  @apply flex items-center justify-center gap-2 relative z-10;
+}
+
+.download-icon-container {
+  @apply relative flex items-center justify-center;
+  width: 16px;
+  height: 16px;
+}
+
+.download-text {
+  @apply transition-all duration-200;
+  min-width: 80px;
+  text-align: left;
+}
+
+.download-button.downloading {
+  @apply bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-blue-500/30;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+  animation: downloadGlow 2s ease-in-out infinite alternate;
+}
+
+.download-button.success {
+  @apply bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-green-500/30;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
+
+.download-pulse {
+  @apply absolute inset-0 bg-blue-500/30 rounded-full;
+  animation: downloadPulse 1.5s ease-in-out infinite;
+}
+
+.download-bounce {
+  animation: downloadBounce 1s ease-in-out infinite;
+}
+
+.download-success {
+  @apply text-green-400;
+  animation: downloadSuccess 0.5s ease-out;
+}
+
+.download-progress-container {
+  @apply absolute bottom-0 left-0 right-0 h-1 bg-[#2a2f3a] overflow-hidden rounded-b-lg;
+}
+
+.download-progress-bar {
+  @apply h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-200 ease-out;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.download-button:disabled {
+  @apply cursor-not-allowed;
+}
+
+.download-button:disabled:hover {
+  @apply bg-[#3a404b]/50;
+}
+
+@keyframes downloadGlow {
+  0% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.4),
+      0 0 40px rgba(147, 51, 234, 0.2);
+  }
+}
+
+@keyframes downloadPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes downloadBounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes downloadSuccess {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.revised-prompt {
+  @apply mt-3 text-gray-400 text-sm italic;
 }
 
 /* Mobile Specific */
@@ -280,5 +485,56 @@
 
   .markdown-content pre {
     @apply max-w-[calc(100vw-3rem)] overflow-x-auto text-[14px];
+  }
+
+  .input-mode-selector {
+    @apply mb-2;
+  }
+
+  .image-input-wrapper {
+    @apply p-3;
+  }
+
+  .generate-button {
+    @apply px-3 py-2 text-xs;
+  }
+
+  .chat-generated-image {
+    @apply max-w-full;
+  }
+}
+
+/* Loading Indicator */
+.loading-indicator {
+  @apply flex items-center gap-2 mt-2;
+}
+
+.loading-dots {
+  @apply flex gap-1;
+}
+
+.loading-dots span {
+  @apply w-2 h-2 bg-blue-500 rounded-full;
+  animation: loadingPulse 1.4s ease-in-out infinite both;
+}
+
+.loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes loadingPulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
