@@ -9,7 +9,7 @@ import {
   updateChatTitle,
   deleteChat,
   getChat,
-  getChats,
+  getChatsCostOptimized,
   syncToCloud,
 } from '../lib/db'
 import { useRouter } from 'next/navigation'
@@ -62,7 +62,7 @@ export default function Chat() {
 
     try {
       setChatsLoading(true)
-      const chats = await getChats(user)
+      const chats = await getChatsCostOptimized(user)
       setChatsData(chats)
     } catch (error) {
       console.error('Failed to load chats:', error)
@@ -80,9 +80,24 @@ export default function Chat() {
 
     try {
       const result = await createChat(user)
+
+      // Immediately add new chat to the top of the list (optimistic update)
+      const newChatSummary = {
+        $id: result.$id,
+        title: result.title,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+        messageCount: 0,
+        isArchived: false,
+        isPinned: false,
+      }
+
+      setChatsData((prev) => [newChatSummary, ...prev])
       setCurrentChatId(result.$id)
       router.push(`/?chatId=${result.$id}`)
-      await loadChats() // Refresh the chats list
+
+      // Refresh from database to ensure consistency (but UI already shows correct order)
+      await loadChats()
     } catch (error) {
       console.error('Failed to create chat:', error)
     }
@@ -239,7 +254,7 @@ export default function Chat() {
         await loadChats()
 
         // Navigate to first available chat or home
-        const updatedChats = await getChats(user)
+        const updatedChats = await getChatsCostOptimized(user)
         if (updatedChats.length > 0) {
           router.push(`/?chatId=${updatedChats[0].$id}`)
           setCurrentChatId(updatedChats[0].$id)
