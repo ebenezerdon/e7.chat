@@ -16,7 +16,15 @@
 }
 
 .chat-header {
-  @apply p-4 sm:p-8 border-b border-[#2c313a]/80 flex items-center bg-gradient-to-r from-[#1a1e24]/50 to-[#1e2329]/50;
+  @apply p-4 sm:p-8 border-b border-[#2c313a]/80 flex items-center justify-between bg-gradient-to-r from-[#1a1e24]/50 to-[#1e2329]/50;
+}
+
+.auth-controls {
+  @apply flex items-center;
+}
+
+.auth-button {
+  @apply bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all duration-200 text-sm font-medium shadow-md;
 }
 
 /* Mobile header adjustments */

@@ -3,8 +3,8 @@ import Dexie from 'dexie'
 export const db = new Dexie('chatApp')
 
 db.version(1).stores({
-  chats: '++id, title, createdAt',
-  messages: '++id, chatId, role, content, createdAt',
+  chats: '++id, title, createdAt, synced, cloudId',
+  messages: '++id, chatId, role, content, createdAt, synced, cloudId',
 })
 
 export const createChat = (title = 'New Chat') =>
