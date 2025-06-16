@@ -31,6 +31,7 @@ export default function Chat() {
   const [chatsData, setChatsData] = useState([])
   const [currentChat, setCurrentChat] = useState(null)
   const [chatsLoading, setChatsLoading] = useState(true)
+  const [savingMessages, setSavingMessages] = useState(new Set())
 
   const fetchedChats = chatsData
 
@@ -42,13 +43,29 @@ export default function Chat() {
     setMessages,
     status,
   } = useChat({
-    onFinish: async (message) => {
+    onFinish: (message) => {
+      // Save assistant message to database in the background (non-blocking)
       if (currentChatId && message.role === 'assistant' && user) {
-        try {
-          await saveMessage(user, currentChatId, message.role, message.content)
-        } catch (error) {
-          console.error('Failed to save assistant message:', error)
-        }
+        const messageId = message.id || Date.now()
+        setSavingMessages((prev) => new Set([...prev, messageId]))
+
+        saveMessage(user, currentChatId, message.role, message.content)
+          .then(() => {
+            setSavingMessages((prev) => {
+              const newSet = new Set(prev)
+              newSet.delete(messageId)
+              return newSet
+            })
+          })
+          .catch((error) => {
+            setSavingMessages((prev) => {
+              const newSet = new Set(prev)
+              newSet.delete(messageId)
+              return newSet
+            })
+            console.error('Failed to save assistant message:', error)
+            // Could implement retry logic or show a warning indicator here
+          })
       }
     },
   })
@@ -232,13 +249,36 @@ export default function Chat() {
       const isFirstMessage =
         (await getChatMessages(user, currentChatId)).length === 0
 
-      await saveMessage(user, currentChatId, 'user', input)
-
-      if (isFirstMessage) generateTitle(input)
-
+      // Optimistic update: immediately trigger AI response
       handleSubmit()
+
+      // Save user message to database in the background
+      const userMessageId = `user-${Date.now()}`
+      setSavingMessages((prev) => new Set([...prev, userMessageId]))
+
+      try {
+        await saveMessage(user, currentChatId, 'user', input)
+        setSavingMessages((prev) => {
+          const newSet = new Set(prev)
+          newSet.delete(userMessageId)
+          return newSet
+        })
+
+        if (isFirstMessage) {
+          generateTitle(input)
+        }
+      } catch (error) {
+        setSavingMessages((prev) => {
+          const newSet = new Set(prev)
+          newSet.delete(userMessageId)
+          return newSet
+        })
+        console.error('Failed to save user message:', error)
+        // Could implement retry logic or show a warning indicator here
+        // For now, we'll just log the error since the message is already visible in UI
+      }
     } catch (error) {
-      console.error('Failed to save user message:', error)
+      console.error('Failed to process message:', error)
       alert('Failed to send message. Please try again.')
     }
   }
@@ -321,6 +361,7 @@ export default function Chat() {
           messages={messages}
           status={status}
           chatThreadRef={chatThreadRef}
+          savingMessages={savingMessages}
         />
 
         <div className="input-area">

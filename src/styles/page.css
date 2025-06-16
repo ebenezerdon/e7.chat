@@ -75,6 +75,21 @@
   @apply text-gray-400 text-[15px] sm:text-[15px] mb-2 sm:mb-3 font-medium;
 }
 
+.saving-indicator {
+  @apply ml-2 text-blue-400 text-xs opacity-70;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* Avatars */
 .user-avatar {
   @apply w-8 h-8 sm:w-12 sm:h-12 rounded-full mr-3 sm:mr-5 flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-700 flex-shrink-0 shadow-md;

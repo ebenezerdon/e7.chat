@@ -287,18 +287,25 @@ export const saveMessage = async (user, chatId, role, content) => {
   }
 
   try {
-    // Get current chat to access existing messages
-    const currentChat = await getChat(user, chatId)
-    if (!currentChat) {
-      throw new Error('Chat not found')
-    }
-
     // Create new message object
     const newMessage = {
       id: ID.unique(), // Give each message a unique ID for React keys
       role,
       content,
       createdAt: new Date().toISOString(),
+    }
+
+    // Get current chat to access existing messages (select only needed fields)
+    const currentChat = await databases.getDocument(
+      DATABASE_ID,
+      CHATS_COLLECTION_ID,
+      chatId,
+      [Query.select(['messages', 'messageCount', 'userId'])],
+    )
+
+    // Verify ownership
+    if (currentChat.userId !== user.$id) {
+      throw new Error('Unauthorized access to chat')
     }
 
     // Parse existing messages from JSON string
@@ -323,8 +330,10 @@ export const saveMessage = async (user, chatId, role, content) => {
       updateData,
     )
 
-    // Update cost-optimized metadata with new message count
-    await updateChatInMetadata(user, result, 'update')
+    // Update cost-optimized metadata with new message count (don't await to make it non-blocking)
+    updateChatInMetadata(user, result, 'update').catch((error) => {
+      console.error('Non-critical: Failed to update chat metadata:', error)
+    })
 
     return newMessage // Return the new message
   } catch (error) {
