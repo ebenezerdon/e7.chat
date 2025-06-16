@@ -1,8 +1,9 @@
 import { User, Download, Loader2, Check } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { useState, useEffect } from 'react'
+import ImageGenerationAnimation from './ImageGenerationAnimation'
 
-const Message = ({ role, content, isSaving, type, imageData }) => {
+const Message = ({ role, content, isSaving, type, imageData, imagePrompt }) => {
   const [downloadState, setDownloadState] = useState('idle') // idle, downloading, success
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [downloadText, setDownloadText] = useState('Download')
@@ -112,6 +113,10 @@ const Message = ({ role, content, isSaving, type, imageData }) => {
                 <span></span>
               </div>
             </div>
+          )}
+
+          {type === 'image-generating' && (
+            <ImageGenerationAnimation prompt={imagePrompt} />
           )}
 
           {type === 'image-response' && imageData && (

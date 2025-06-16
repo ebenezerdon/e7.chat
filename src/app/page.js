@@ -271,7 +271,8 @@ export default function Chat() {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
         content: 'Generating image...',
-        type: 'loading',
+        type: 'image-generating',
+        imagePrompt: prompt,
       }
 
       setMessages((prev) => [...prev, userMessage, loadingMessage])
