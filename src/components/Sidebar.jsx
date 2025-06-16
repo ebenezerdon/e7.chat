@@ -50,19 +50,19 @@ export default function Sidebar({
         <div className="chat-list">
           {fetchedChats?.map((chat) => (
             <Link
-              key={chat.id}
-              href={`/?chatId=${chat.id}`}
+              key={chat.$id}
+              href={`/?chatId=${chat.$id}`}
               onClick={() => {
-                setCurrentChatId(chat.id)
+                setCurrentChatId(chat.$id)
                 closeSidebar()
               }}
               className={`chat-item ${
-                currentChatId === chat.id ? 'chat-item-active' : ''
+                currentChatId === chat.$id ? 'chat-item-active' : ''
               }`}
             >
               <span
                 className={`chat-item-text ${
-                  currentChatId === chat.id
+                  currentChatId === chat.$id
                     ? 'chat-item-text-active'
                     : 'chat-item-text-inactive'
                 }`}
