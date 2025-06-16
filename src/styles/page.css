@@ -42,6 +42,11 @@
   @apply text-xl sm:text-2xl font-medium tracking-tight text-gray-100;
 }
 
+.creating-indicator {
+  @apply text-sm text-blue-400 font-normal opacity-75;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
 /* Message Container */
 .message-container {
   @apply flex-1 overflow-y-auto py-6 sm:py-10 px-4 sm:px-10 bg-gradient-to-b from-[#1a1e24]/30 to-[#1e2329]/30;

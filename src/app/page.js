@@ -10,7 +10,6 @@ import {
   deleteChat,
   getChat,
   getChatsCostOptimized,
-  syncToCloud,
 } from '../lib/db'
 import { useRouter } from 'next/navigation'
 import { SendHorizontal, MinusCircle, LogIn } from 'lucide-react'
@@ -24,7 +23,7 @@ import UserMenu from '@/components/UserMenu'
 export default function Chat() {
   const router = useRouter()
   const chatThreadRef = useRef(null)
-  const { user, loading } = useAuth()
+  const { user } = useAuth()
 
   const [currentChatId, setCurrentChatId] = useState(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -32,8 +31,6 @@ export default function Chat() {
   const [currentChat, setCurrentChat] = useState(null)
   const [chatsLoading, setChatsLoading] = useState(true)
   const [savingMessages, setSavingMessages] = useState(new Set())
-
-  const fetchedChats = chatsData
 
   const {
     messages,
@@ -64,7 +61,6 @@ export default function Chat() {
               return newSet
             })
             console.error('Failed to save assistant message:', error)
-            // Could implement retry logic or show a warning indicator here
           })
       }
     },
@@ -96,29 +92,83 @@ export default function Chat() {
     }
 
     try {
-      const result = await createChat(user)
+      // Generate temporary ID for optimistic update
+      const tempChatId = `temp-${Date.now()}`
+      const now = new Date().toISOString()
 
-      // Immediately add new chat to the top of the list (optimistic update)
-      const newChatSummary = {
-        $id: result.$id,
-        title: result.title,
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
+      // Create optimistic chat object
+      const optimisticChat = {
+        $id: tempChatId,
+        title: 'New Chat',
+        createdAt: now,
+        updatedAt: now,
         messageCount: 0,
         isArchived: false,
         isPinned: false,
+        isOptimistic: true,
       }
 
-      setChatsData((prev) => [newChatSummary, ...prev])
-      setCurrentChatId(result.$id)
-      router.push(`/?chatId=${result.$id}`)
+      // Immediately update UI with optimistic chat
+      setChatsData((prev) => [optimisticChat, ...prev])
+      setCurrentChatId(tempChatId)
 
-      // Refresh from database to ensure consistency (but UI already shows correct order)
-      await loadChats()
+      // Navigate immediately to provide instant feedback
+      router.push(`/?chatId=${tempChatId}`)
+
+      // Clear messages for new chat
+      setMessages([])
+      setCurrentChat(optimisticChat)
+
+      // Now create the actual chat in the database (background operation)
+      const createChatPromise = createChat(user)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Chat creation timeout')), 10000),
+      )
+
+      const result = await Promise.race([createChatPromise, timeoutPromise])
+
+      // Replace optimistic chat with real chat data
+      setChatsData((prev) =>
+        prev.map((chat) =>
+          chat.$id === tempChatId
+            ? {
+                $id: result.$id,
+                title: result.title,
+                createdAt: result.createdAt,
+                updatedAt: result.updatedAt,
+                messageCount: 0,
+                isArchived: false,
+                isPinned: false,
+              }
+            : chat,
+        ),
+      )
+
+      // Update current chat ID to real ID
+      setCurrentChatId(result.$id)
+      setCurrentChat(result)
+
+      // Update URL with real chat ID
+      router.replace(`/?chatId=${result.$id}`)
     } catch (error) {
       console.error('Failed to create chat:', error)
+
+      // Rollback optimistic update on error
+      setChatsData((prev) => prev.filter((chat) => !chat.isOptimistic))
+
+      // Navigate back to first available chat or home
+      const existingChats = chatsData.filter((chat) => !chat.isOptimistic)
+      if (existingChats.length > 0) {
+        setCurrentChatId(existingChats[0].$id)
+        router.push(`/?chatId=${existingChats[0].$id}`)
+      } else {
+        setCurrentChatId(null)
+        router.push('/')
+      }
+
+      alert('Failed to create new chat. Please try again.')
     }
-  }, [user, router, loadChats])
+  }, [user, router, chatsData, setMessages])
 
   const generateTitle = async (message) => {
     try {
@@ -155,6 +205,11 @@ export default function Chat() {
       return
     }
 
+    // Don't try to load optimistic chats from database
+    if (currentChatId.startsWith('temp-')) {
+      return
+    }
+
     try {
       const chat = await getChat(user, currentChatId)
       setCurrentChat(chat)
@@ -163,6 +218,98 @@ export default function Chat() {
       setCurrentChat(null)
     }
   }, [user, currentChatId])
+
+  const handleChatSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!input.trim()) return
+
+    if (!user) {
+      setShowAuthModal(true)
+      return
+    }
+
+    if (!currentChatId) {
+      console.error('No current chat ID available')
+      return
+    }
+
+    try {
+      // Check if we're using an optimistic chat ID
+      const isOptimisticChat = currentChatId.startsWith('temp-')
+
+      if (isOptimisticChat) {
+        console.warn('Chat is still being created, please wait...')
+        return
+      }
+
+      const isFirstMessage =
+        (await getChatMessages(user, currentChatId)).length === 0
+
+      // Optimistic update: immediately trigger AI response
+      handleSubmit()
+
+      // Save user message to database in the background
+      const userMessageId = `user-${Date.now()}`
+      setSavingMessages((prev) => new Set([...prev, userMessageId]))
+
+      try {
+        await saveMessage(user, currentChatId, 'user', input)
+        setSavingMessages((prev) => {
+          const newSet = new Set(prev)
+          newSet.delete(userMessageId)
+          return newSet
+        })
+
+        if (isFirstMessage) {
+          generateTitle(input)
+        }
+      } catch (error) {
+        setSavingMessages((prev) => {
+          const newSet = new Set(prev)
+          newSet.delete(userMessageId)
+          return newSet
+        })
+        console.error('Failed to save user message:', error)
+      }
+    } catch (error) {
+      console.error('Failed to process message:', error)
+      alert('Failed to send message. Please try again.')
+    }
+  }
+
+  const handleDeleteChat = useCallback(async () => {
+    if (!currentChatId || !user) return
+
+    if (window.confirm('Are you sure you want to delete this chat?')) {
+      try {
+        await deleteChat(user, currentChatId)
+
+        // Refresh the chats list
+        await loadChats()
+
+        // Navigate to first available chat or home
+        const updatedChats = await getChatsCostOptimized(user)
+        if (updatedChats.length > 0) {
+          router.push(`/?chatId=${updatedChats[0].$id}`)
+          setCurrentChatId(updatedChats[0].$id)
+        } else {
+          router.push('/')
+          setCurrentChatId(null)
+        }
+      } catch (error) {
+        console.error('Failed to delete chat:', error)
+        alert(
+          'Failed to delete chat. Please check your connection and try again.',
+        )
+      }
+    }
+  }, [currentChatId, user, router, loadChats])
+
+  const handleChatSelect = (chatId) => {
+    setCurrentChatId(chatId)
+    router.push(`/?chatId=${chatId}`)
+  }
 
   // Load chats when user logs in or out
   useEffect(() => {
@@ -212,6 +359,12 @@ export default function Chat() {
         return
       }
 
+      // Don't try to load messages for optimistic chats
+      if (currentChatId.startsWith('temp-')) {
+        setMessages([])
+        return
+      }
+
       try {
         const loadedMessages = await getChatMessages(user, currentChatId)
         setMessages(loadedMessages)
@@ -224,106 +377,21 @@ export default function Chat() {
     loadChatMessages()
   }, [user, currentChatId, setMessages])
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (chatThreadRef.current && messages.length > 0) {
       chatThreadRef.current.scrollTop = chatThreadRef.current.scrollHeight
     }
   }, [messages, currentChatId])
 
-  const handleChatSubmit = async (e) => {
-    e.preventDefault()
-
-    if (!input.trim()) return
-
-    if (!user) {
-      setShowAuthModal(true)
-      return
-    }
-
-    if (!currentChatId) {
-      console.error('No current chat ID available')
-      return
-    }
-
-    try {
-      const isFirstMessage =
-        (await getChatMessages(user, currentChatId)).length === 0
-
-      // Optimistic update: immediately trigger AI response
-      handleSubmit()
-
-      // Save user message to database in the background
-      const userMessageId = `user-${Date.now()}`
-      setSavingMessages((prev) => new Set([...prev, userMessageId]))
-
-      try {
-        await saveMessage(user, currentChatId, 'user', input)
-        setSavingMessages((prev) => {
-          const newSet = new Set(prev)
-          newSet.delete(userMessageId)
-          return newSet
-        })
-
-        if (isFirstMessage) {
-          generateTitle(input)
-        }
-      } catch (error) {
-        setSavingMessages((prev) => {
-          const newSet = new Set(prev)
-          newSet.delete(userMessageId)
-          return newSet
-        })
-        console.error('Failed to save user message:', error)
-        // Could implement retry logic or show a warning indicator here
-        // For now, we'll just log the error since the message is already visible in UI
-      }
-    } catch (error) {
-      console.error('Failed to process message:', error)
-      alert('Failed to send message. Please try again.')
-    }
-  }
-
-  const handleDeleteChat = useCallback(async () => {
-    if (!currentChatId || !user) return
-
-    if (window.confirm('Are you sure you want to delete this chat?')) {
-      try {
-        await deleteChat(user, currentChatId)
-
-        // Refresh the chats list
-        await loadChats()
-
-        // Navigate to first available chat or home
-        const updatedChats = await getChatsCostOptimized(user)
-        if (updatedChats.length > 0) {
-          router.push(`/?chatId=${updatedChats[0].$id}`)
-          setCurrentChatId(updatedChats[0].$id)
-        } else {
-          router.push('/')
-          setCurrentChatId(null)
-        }
-      } catch (error) {
-        console.error('Failed to delete chat:', error)
-        alert(
-          'Failed to delete chat. Please check your connection and try again.',
-        )
-      }
-    }
-  }, [currentChatId, user, router, loadChats])
-
   if (chatsLoading) {
     return <div className="loading-state">Loading...</div>
-  }
-
-  const handleChatSelect = (chatId) => {
-    setCurrentChatId(chatId)
-    router.push(`/?chatId=${chatId}`)
   }
 
   return (
     <div className="chat-container">
       <Sidebar
-        fetchedChats={fetchedChats}
+        fetchedChats={chatsData}
         currentChatId={currentChatId}
         setCurrentChatId={handleChatSelect}
         initializeNewChat={initializeNewChat}
@@ -331,10 +399,16 @@ export default function Chat() {
       <div className="chat-main">
         <div className="chat-header">
           <div className="title-group">
-            <h1 className="chat-title">{currentChat?.title || 'New Chat'}</h1>
+            <h1 className="chat-title">
+              {currentChat?.title || 'New Chat'}
+              {currentChatId?.startsWith('temp-') && (
+                <span className="creating-indicator"> (Creating...)</span>
+              )}
+            </h1>
             <button
               onClick={handleDeleteChat}
               className="delete-button"
+              disabled={currentChatId?.startsWith('temp-')}
               aria-label="Delete chat"
             >
               <MinusCircle className="delete-icon" strokeWidth={1.5} />
@@ -368,9 +442,16 @@ export default function Chat() {
           <form onSubmit={handleChatSubmit} className="input-form">
             <input
               value={input}
-              placeholder="Message AI Assistant..."
+              placeholder={
+                currentChatId?.startsWith('temp-')
+                  ? 'Creating chat...'
+                  : 'Message AI Assistant...'
+              }
               onChange={handleInputChange}
-              disabled={status !== 'ready' && status !== undefined}
+              disabled={
+                (status !== 'ready' && status !== undefined) ||
+                currentChatId?.startsWith('temp-')
+              }
               className="input-field"
               aria-label="Chat input"
             />
@@ -379,7 +460,8 @@ export default function Chat() {
               disabled={
                 !input.trim() ||
                 status === 'submitted' ||
-                status === 'streaming'
+                status === 'streaming' ||
+                currentChatId?.startsWith('temp-')
               }
               className="submit-button"
               aria-label="Send message"

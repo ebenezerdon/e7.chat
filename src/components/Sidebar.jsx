@@ -58,7 +58,7 @@ export default function Sidebar({
               }}
               className={`chat-item ${
                 currentChatId === chat.$id ? 'chat-item-active' : ''
-              }`}
+              } ${chat.isOptimistic ? 'chat-item-creating' : ''}`}
             >
               <span
                 className={`chat-item-text ${
@@ -68,6 +68,9 @@ export default function Sidebar({
                 }`}
               >
                 {chat.title || 'New Chat'}
+                {chat.isOptimistic && (
+                  <span className="chat-creating-indicator"> ●</span>
+                )}
               </span>
             </Link>
           ))}
