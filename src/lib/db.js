@@ -1,10 +1,4 @@
-import {
-  databases,
-  ID,
-  DATABASE_ID,
-  CHATS_COLLECTION_ID,
-  MESSAGES_COLLECTION_ID,
-} from './appwrite'
+import { databases, ID, DATABASE_ID, CHATS_COLLECTION_ID } from './appwrite'
 import { Query } from 'appwrite'
 
 // Chat operations
@@ -18,6 +12,7 @@ export const createChat = async (user, title = 'New Chat') => {
     const chatData = {
       title,
       userId: user.$id,
+      messages: '[]', // Start with empty messages array as JSON string
       createdAt: now,
       updatedAt: now,
       messageCount: 0,
@@ -122,21 +117,8 @@ export const deleteChat = async (user, chatId) => {
   }
 
   try {
-    // First delete all messages in the chat
-    const messages = await getChatMessages(user, chatId)
-    await Promise.all(
-      messages.map((message) =>
-        databases.deleteDocument(
-          DATABASE_ID,
-          MESSAGES_COLLECTION_ID,
-          message.$id,
-        ),
-      ),
-    )
-
-    // Then delete the chat
+    // Much simpler - just delete the chat document (messages are embedded)
     await databases.deleteDocument(DATABASE_ID, CHATS_COLLECTION_ID, chatId)
-
     console.log('Successfully deleted chat:', chatId)
   } catch (error) {
     console.error('Error deleting chat:', error)
@@ -155,27 +137,43 @@ export const saveMessage = async (user, chatId, role, content) => {
   }
 
   try {
-    const messageData = {
-      chatId,
-      role,
-      content,
-      timestamp: new Date().toISOString(),
-      isEdited: false,
+    // Get current chat to access existing messages
+    const currentChat = await getChat(user, chatId)
+    if (!currentChat) {
+      throw new Error('Chat not found')
     }
 
-    const result = await databases.createDocument(
+    // Create new message object
+    const newMessage = {
+      id: ID.unique(), // Give each message a unique ID for React keys
+      role,
+      content,
+      createdAt: new Date().toISOString(),
+    }
+
+    // Parse existing messages from JSON string
+    const existingMessages = currentChat.messages
+      ? JSON.parse(currentChat.messages)
+      : []
+
+    // Add message to existing messages array
+    const updatedMessages = [...existingMessages, newMessage]
+
+    // Update the chat document with new message and metadata
+    const updateData = {
+      messages: JSON.stringify(updatedMessages), // Store as JSON string
+      messageCount: updatedMessages.length,
+      updatedAt: new Date().toISOString(),
+    }
+
+    const result = await databases.updateDocument(
       DATABASE_ID,
-      MESSAGES_COLLECTION_ID,
-      ID.unique(),
-      messageData,
-      [
-        `read("user:${user.$id}")`,
-        `update("user:${user.$id}")`,
-        `delete("user:${user.$id}")`,
-      ],
+      CHATS_COLLECTION_ID,
+      chatId,
+      updateData,
     )
 
-    return result
+    return newMessage // Return the new message
   } catch (error) {
     console.error('Error saving message:', error)
     throw error
@@ -188,22 +186,16 @@ export const getChatMessages = async (user, chatId) => {
   }
 
   try {
-    const result = await databases.listDocuments(
-      DATABASE_ID,
-      MESSAGES_COLLECTION_ID,
-      [
-        Query.equal('chatId', chatId),
-        Query.orderAsc('timestamp'),
-        Query.limit(1000),
-      ],
-    )
+    const chat = await getChat(user, chatId)
+    if (!chat) {
+      return []
+    }
 
-    return result.documents.map((message) => ({
-      id: message.$id,
-      role: message.role,
-      content: message.content,
-      createdAt: message.timestamp,
-    }))
+    // Parse messages from JSON string and sort by creation time
+    const messages = chat.messages ? JSON.parse(chat.messages) : []
+    return messages.sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+    )
   } catch (error) {
     console.error('Error fetching chat messages:', error)
     return []

@@ -53,6 +53,25 @@ export default function Chat() {
     },
   })
 
+  const loadChats = useCallback(async () => {
+    if (!user) {
+      setChatsData([])
+      setChatsLoading(false)
+      return
+    }
+
+    try {
+      setChatsLoading(true)
+      const chats = await getChats(user)
+      setChatsData(chats)
+    } catch (error) {
+      console.error('Failed to load chats:', error)
+      setChatsData([])
+    } finally {
+      setChatsLoading(false)
+    }
+  }, [user])
+
   const initializeNewChat = useCallback(async () => {
     if (!user) {
       setShowAuthModal(true)
@@ -67,7 +86,7 @@ export default function Chat() {
     } catch (error) {
       console.error('Failed to create chat:', error)
     }
-  }, [user, router])
+  }, [user, router, loadChats])
 
   const generateTitle = async (message) => {
     try {
@@ -97,25 +116,6 @@ export default function Chat() {
       console.error('Error generating title', error)
     }
   }
-
-  const loadChats = useCallback(async () => {
-    if (!user) {
-      setChatsData([])
-      setChatsLoading(false)
-      return
-    }
-
-    try {
-      setChatsLoading(true)
-      const chats = await getChats(user)
-      setChatsData(chats)
-    } catch (error) {
-      console.error('Failed to load chats:', error)
-      setChatsData([])
-    } finally {
-      setChatsLoading(false)
-    }
-  }, [user])
 
   const loadCurrentChat = useCallback(async () => {
     if (!user || !currentChatId) {
