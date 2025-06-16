@@ -38,6 +38,7 @@ export default function Chat() {
     handleInputChange,
     handleSubmit,
     setMessages,
+    setInput,
     status,
   } = useChat({
     onFinish: (message) => {
@@ -199,6 +200,167 @@ export default function Chat() {
     }
   }
 
+  const detectImageRequest = (message) => {
+    const lowerMessage = message.toLowerCase().trim()
+
+    // Keywords that trigger image generation
+    const imageKeywords = [
+      'generate image',
+      'generate an image',
+      'create image',
+      'create an image',
+      'make image',
+      'make an image',
+      'draw image',
+      'draw an image',
+      'generate picture',
+      'create picture',
+      'make picture',
+      'draw picture',
+      'image of',
+      'picture of',
+      'show me image',
+      'show me picture',
+      'visualize',
+      'illustrate',
+    ]
+
+    // Check if message starts with any image keywords
+    for (const keyword of imageKeywords) {
+      if (lowerMessage.startsWith(keyword)) {
+        // Extract the prompt (everything after the keyword)
+        const prompt = message.substring(keyword.length).trim()
+        // Remove common connecting words at the beginning
+        const cleanedPrompt = prompt
+          .replace(/^(of|for|:|about|showing|with)\s*/i, '')
+          .trim()
+        return cleanedPrompt || prompt
+      }
+    }
+
+    // Check if message contains "generate/create/make/draw + image/picture"
+    const containsPattern =
+      /\b(generate|create|make|draw|show me)\s+(an?\s+)?(image|picture|photo)\s+(of|for|showing|with)?\s*(.+)/i
+    const match = lowerMessage.match(containsPattern)
+    if (match && match[5]) {
+      return match[5].trim()
+    }
+
+    return null
+  }
+
+  const handleImageGeneration = async (prompt, originalMessage) => {
+    if (!user || !currentChatId) {
+      setShowAuthModal(true)
+      return
+    }
+
+    try {
+      console.log('Generating image for prompt:', prompt)
+
+      // Add user message to chat immediately
+      const userMessage = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: originalMessage,
+        type: 'image-request',
+      }
+
+      // Add a loading message for the assistant
+      const loadingMessage = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: 'Generating image...',
+        type: 'loading',
+      }
+
+      setMessages((prev) => [...prev, userMessage, loadingMessage])
+
+      // Save user message to database
+      await saveMessage(
+        user,
+        currentChatId,
+        userMessage.role,
+        userMessage.content,
+      )
+
+      // Generate image
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          size: '1024x1024',
+          quality: 'standard',
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate image')
+      }
+
+      const imageData = {
+        url: data.imageUrl,
+        prompt: prompt,
+        revisedPrompt: data.revisedPrompt,
+        timestamp: new Date().toISOString(),
+      }
+
+      // Replace loading message with actual image
+      const assistantMessage = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: `I've generated an image based on your request: "${prompt}"`,
+        type: 'image-response',
+        imageData: imageData,
+      }
+
+      setMessages((prev) => {
+        const newMessages = [...prev]
+        // Replace the loading message with the actual result
+        newMessages[newMessages.length - 1] = assistantMessage
+        return newMessages
+      })
+
+      // Save assistant message with image data to database
+      const assistantMessageData = {
+        content: assistantMessage.content,
+        type: assistantMessage.type,
+        imageData: assistantMessage.imageData,
+      }
+
+      await saveMessage(
+        user,
+        currentChatId,
+        assistantMessage.role,
+        JSON.stringify(assistantMessageData),
+      )
+
+      // Generate title if this is the first interaction
+      if (messages.length === 0) {
+        await generateTitle(originalMessage)
+      }
+    } catch (error) {
+      console.error('Image generation failed:', error)
+
+      // Replace loading message with error message
+      setMessages((prev) => {
+        const newMessages = [...prev]
+        newMessages[newMessages.length - 1] = {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: `Sorry, I couldn't generate the image. Error: ${error.message}`,
+          type: 'error',
+        }
+        return newMessages
+      })
+    }
+  }
+
   const loadCurrentChat = useCallback(async () => {
     if (!user || !currentChatId) {
       setCurrentChat(null)
@@ -243,10 +405,22 @@ export default function Chat() {
         return
       }
 
+      // Check if this is an image generation request
+      const imagePrompt = detectImageRequest(input)
+
+      if (imagePrompt) {
+        console.log('Image request detected:', imagePrompt)
+        // Clear input immediately for better UX
+        setInput('')
+        // Handle image generation
+        await handleImageGeneration(imagePrompt, input)
+        return
+      }
+
       const isFirstMessage =
         (await getChatMessages(user, currentChatId)).length === 0
 
-      // Optimistic update: immediately trigger AI response
+      // Optimistic update: immediately trigger AI response for text
       handleSubmit()
 
       // Save user message to database in the background
@@ -367,7 +541,32 @@ export default function Chat() {
 
       try {
         const loadedMessages = await getChatMessages(user, currentChatId)
-        setMessages(loadedMessages)
+
+        // Parse image messages that were stored as JSON
+        const parsedMessages = loadedMessages.map((message) => {
+          if (
+            message.role === 'assistant' &&
+            typeof message.content === 'string' &&
+            message.content.startsWith('{')
+          ) {
+            try {
+              const parsed = JSON.parse(message.content)
+              if (parsed.type && parsed.imageData) {
+                return {
+                  ...message,
+                  content: parsed.content,
+                  type: parsed.type,
+                  imageData: parsed.imageData,
+                }
+              }
+            } catch (e) {
+              console.log('Failed to parse message as JSON:', e)
+            }
+          }
+          return message
+        })
+
+        setMessages(parsedMessages)
       } catch (error) {
         console.error('Failed to load messages', error)
         setMessages([])
@@ -445,7 +644,7 @@ export default function Chat() {
               placeholder={
                 currentChatId?.startsWith('temp-')
                   ? 'Creating chat...'
-                  : 'Message AI Assistant...'
+                  : 'Message AI Assistant or start with "generate image" for images...'
               }
               onChange={handleInputChange}
               disabled={
