@@ -644,7 +644,7 @@ export default function Chat() {
               placeholder={
                 currentChatId?.startsWith('temp-')
                   ? 'Creating chat...'
-                  : 'Message AI Assistant or start with "generate image" for images...'
+                  : 'Message AI Assistant or ask to generate an image...'
               }
               onChange={handleInputChange}
               disabled={
