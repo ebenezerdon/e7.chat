@@ -3,26 +3,34 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useChat } from '@ai-sdk/react'
 import {
-  db,
   createChat,
   getChatMessages,
   saveMessage,
   updateChatTitle,
   deleteChat,
   getChat,
-} from '../lib/db'
+  getChats,
+  syncToCloud,
+} from '../lib/hybrid-db'
 import { useRouter } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { SendHorizontal, MinusCircle } from 'lucide-react'
+import { SendHorizontal, MinusCircle, LogIn } from 'lucide-react'
 import ChatThread from '@/components/ChatThread'
 import '../styles/page.css'
 import Sidebar from '@/components/Sidebar'
+import { useAuth } from '../lib/auth'
+import AuthModal from '@/components/AuthModal'
+import UserMenu from '@/components/UserMenu'
+import { db } from '../lib/db'
 
 export default function Chat() {
   const router = useRouter()
   const chatThreadRef = useRef(null)
+  const { user, loading } = useAuth()
 
   const [currentChatId, setCurrentChatId] = useState(null)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [chatsData, setChatsData] = useState([])
 
   const fetchedChats = useLiveQuery(() =>
     db.chats.orderBy('createdAt').reverse().toArray(),
@@ -43,7 +51,7 @@ export default function Chat() {
   } = useChat({
     onFinish: async (message) => {
       if (currentChatId && message.role === 'assistant') {
-        await saveMessage(currentChatId, message.role, message.content)
+        await saveMessage(user, currentChatId, message.role, message.content)
       }
     },
   })
@@ -57,9 +65,9 @@ export default function Chat() {
   )
 
   const initializeNewChat = useCallback(async () => {
-    const chatId = await createChat()
-    navigateToChat(chatId)
-  }, [navigateToChat])
+    const result = await createChat(user)
+    navigateToChat(result.localId)
+  }, [navigateToChat, user])
 
   const setActiveChat = useCallback(
     async (requestedChatId = null) => {
@@ -85,12 +93,29 @@ export default function Chat() {
 
       const { title } = await response.json()
       if (title && currentChatId) {
-        await updateChatTitle(currentChatId, title)
+        await updateChatTitle(user, currentChatId, title)
       }
     } catch (error) {
       console.error('Error generating title', error)
     }
   }
+
+  // Sync with cloud when user logs in
+  useEffect(() => {
+    if (user && !loading) {
+      syncToCloud(user)
+      loadChats()
+    }
+  }, [user, loading])
+
+  const loadChats = useCallback(async () => {
+    try {
+      const chats = await getChats(user)
+      setChatsData(chats)
+    } catch (error) {
+      console.error('Failed to load chats:', error)
+    }
+  }, [user])
 
   useEffect(() => {
     if (!fetchedChats) return
@@ -102,7 +127,7 @@ export default function Chat() {
 
     const loadChatMessages = async () => {
       try {
-        const loadedMessages = await getChatMessages(currentChatId)
+        const loadedMessages = await getChatMessages(user, currentChatId)
         setMessages(loadedMessages)
       } catch (error) {
         console.error('Failed to load messages', error)
@@ -110,7 +135,7 @@ export default function Chat() {
     }
 
     loadChatMessages()
-  }, [fetchedChats, currentChatId, setActiveChat, setMessages])
+  }, [fetchedChats, currentChatId, setActiveChat, setMessages, user])
 
   useEffect(() => {
     if (chatThreadRef.current && messages.length > 0) {
@@ -123,9 +148,10 @@ export default function Chat() {
 
     if (!input.trim()) return
 
-    const isFirstMessage = (await getChatMessages(currentChatId)).length === 0
+    const isFirstMessage =
+      (await getChatMessages(user, currentChatId)).length === 0
 
-    await saveMessage(currentChatId, 'user', input)
+    await saveMessage(user, currentChatId, 'user', input)
 
     if (isFirstMessage) generateTitle(input)
 
@@ -136,11 +162,11 @@ export default function Chat() {
     if (!currentChatId) return
 
     if (window.confirm('Are you sure you want to delete this chat?')) {
-      await deleteChat(currentChatId)
+      await deleteChat(user, currentChatId)
       router.push('/')
       setCurrentChatId(null)
     }
-  }, [currentChatId, router])
+  }, [currentChatId, router, user])
 
   if (!fetchedChats) {
     return <div className="loading-state">Loading...</div>
@@ -165,6 +191,21 @@ export default function Chat() {
             >
               <MinusCircle className="delete-icon" strokeWidth={1.5} />
             </button>
+          </div>
+
+          <div className="auth-controls">
+            {user ? (
+              <UserMenu />
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="auth-button"
+                aria-label="Sign in"
+              >
+                <LogIn size={18} />
+                Sign In
+              </button>
+            )}
           </div>
         </div>
 
@@ -199,6 +240,11 @@ export default function Chat() {
           </form>
         </div>
       </div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   )
 }
