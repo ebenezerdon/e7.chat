@@ -161,12 +161,6 @@ const Message = ({ role, content, isSaving, type, imageData, imagePrompt }) => {
                   )}
                 </button>
               </div>
-              {imageData.revisedPrompt &&
-                imageData.revisedPrompt !== imageData.prompt && (
-                  <p className="revised-prompt">
-                    <strong>Revised prompt:</strong> {imageData.revisedPrompt}
-                  </p>
-                )}
             </div>
           )}
         </div>
