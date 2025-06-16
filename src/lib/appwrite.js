@@ -19,5 +19,3 @@ export const DATABASE_ID =
   process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID || 'ai-chat-db'
 export const CHATS_COLLECTION_ID =
   process.env.NEXT_PUBLIC_APPWRITE_CHATS_COLLECTION_ID || 'chats'
-export const MESSAGES_COLLECTION_ID =
-  process.env.NEXT_PUBLIC_APPWRITE_MESSAGES_COLLECTION_ID || 'messages'
