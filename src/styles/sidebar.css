@@ -76,6 +76,15 @@
   @apply bg-gradient-to-r from-[#2c313a] to-[#2e333d] border-[#3a404b]/30;
 }
 
+.chat-item-creating {
+  @apply opacity-70;
+}
+
+.chat-creating-indicator {
+  @apply text-blue-400 text-xs;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
 .chat-item-text {
   @apply truncate text-sm sm:text-base tracking-wide;
 }
