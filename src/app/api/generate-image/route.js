@@ -18,7 +18,7 @@ export async function POST(req) {
       apiKey: process.env.OPENAI_API_KEY,
     })
 
-    // Use OpenAI's client directly for image generation
+    // Use DALL-E 3 for image generation
     const response = await fetch(
       'https://api.openai.com/v1/images/generations',
       {
@@ -30,10 +30,10 @@ export async function POST(req) {
         body: JSON.stringify({
           model: 'dall-e-3',
           prompt: prompt,
-          n: 1,
           size: size,
-          quality: quality,
+          quality: quality === 'auto' ? 'standard' : quality,
           response_format: 'url',
+          n: 1,
         }),
       },
     )
@@ -49,9 +49,12 @@ export async function POST(req) {
 
     const data = await response.json()
 
+    // DALL-E 3 returns image URLs
+    const imageUrl = data.data[0].url
+
     return Response.json({
-      imageUrl: data.data[0].url,
-      revisedPrompt: data.data[0].revised_prompt,
+      imageUrl: imageUrl,
+      revisedPrompt: data.data[0].revised_prompt || prompt,
     })
   } catch (error) {
     console.error('Image generation error:', error)
