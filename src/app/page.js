@@ -603,6 +603,10 @@ export default function Chat() {
         throw new Error('No messages to regenerate from')
       }
 
+      // Determine the target chat ID for regeneration
+      let regenerationChatId = currentChatId
+      let regenerationChat = currentChat
+
       // If creating new chat, handle branching
       if (createNewChat) {
         // Create a new chat without "branch from" prefix in title
@@ -627,9 +631,17 @@ export default function Chat() {
           )
         }
 
+        // Update target for regeneration
+        regenerationChatId = newChat.$id
+        regenerationChat = newChat
+
         // Navigate to the new chat
         router.push(`/?chatId=${newChat.$id}`)
         setCurrentChatId(newChat.$id)
+        setCurrentChat(newChat)
+
+        // Set messages state to show the copied messages in the new chat
+        setMessages(messagesToRegenerate)
 
         // Update chats list to include the new chat
         await loadChats()
@@ -723,8 +735,7 @@ export default function Chat() {
       // Save the regenerated message to database
       // For new chats, we need to reference the newly created chat
       // For existing chats, use the current chat ID
-      const targetChatId = currentChatId
-      if (targetChatId && accumulatedContent) {
+      if (regenerationChatId && accumulatedContent) {
         const targetIndex = createNewChat
           ? newMessages.length - 1
           : messageIndex
@@ -734,7 +745,7 @@ export default function Chat() {
         try {
           await saveMessage(
             user,
-            targetChatId,
+            regenerationChatId,
             'assistant',
             accumulatedContent,
             modelId,
