@@ -823,18 +823,6 @@ export default function Chat() {
               )}
             </h1>
             <div className="header-actions">
-              {user &&
-                currentChatId &&
-                !currentChatId.startsWith('temp-') &&
-                messages.length > 0 && (
-                  <button
-                    onClick={() => setShowShareModal(true)}
-                    className="share-button"
-                    aria-label="Share chat"
-                  >
-                    <Share2 className="share-icon" strokeWidth={1.5} />
-                  </button>
-                )}
               <button
                 onClick={handleDeleteChat}
                 className="delete-button"
@@ -847,6 +835,18 @@ export default function Chat() {
           </div>
 
           <div className="auth-controls">
+            {user &&
+              currentChatId &&
+              !currentChatId.startsWith('temp-') &&
+              messages.length > 0 && (
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="share-button-small"
+                  aria-label="Share chat"
+                >
+                  <Share2 className="share-icon-small" strokeWidth={1.5} />
+                </button>
+              )}
             {user ? (
               <UserMenu />
             ) : (

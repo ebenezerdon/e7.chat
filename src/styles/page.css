@@ -20,7 +20,30 @@
 }
 
 .auth-controls {
-  @apply flex items-center;
+  @apply flex items-center gap-3;
+}
+
+/* User Menu Dark Theme Overrides */
+.user-menu-button {
+  @apply bg-[#2c313a]/60 hover:bg-[#2c313a]/80 border border-[#3a404b]/30 hover:border-[#3a404b]/50 rounded-lg text-gray-200 hover:text-white transition-all duration-200 cursor-pointer px-3 py-2;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.user-menu-button:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.user-menu-dropdown {
+  @apply bg-[#2c313a] border border-[#3a404b]/70 rounded-lg shadow-xl min-w-48 z-50;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.user-menu-item {
+  @apply text-gray-200 hover:text-white hover:bg-[#343a46] transition-colors duration-150 px-4 py-3 text-sm border-none bg-transparent cursor-pointer;
+}
+
+.user-menu-item.danger {
+  @apply text-red-400 hover:text-red-300 hover:bg-red-500/10;
 }
 
 .auth-button {
@@ -52,6 +75,20 @@
 }
 
 .share-icon {
+  @apply w-4 h-4;
+}
+
+.share-button-small {
+  @apply flex items-center justify-center p-2 bg-gradient-to-br from-emerald-600/80 to-emerald-700/80 hover:from-emerald-500/90 hover:to-emerald-600/90 border border-emerald-500/40 hover:border-emerald-400/60 rounded-lg text-white hover:text-white transition-all duration-200 cursor-pointer shadow-sm;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15);
+}
+
+.share-button-small:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  transform: translateY(-0.5px);
+}
+
+.share-icon-small {
   @apply w-4 h-4;
 }
 
