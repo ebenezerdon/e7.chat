@@ -277,7 +277,13 @@ const updateChatInMetadata = async (user, chatData, operation) => {
 }
 
 // Message operations
-export const saveMessage = async (user, chatId, role, content) => {
+export const saveMessage = async (
+  user,
+  chatId,
+  role,
+  content,
+  model = null,
+) => {
   if (!user) {
     throw new Error('Authentication required to save messages')
   }
@@ -293,6 +299,7 @@ export const saveMessage = async (user, chatId, role, content) => {
       role,
       content,
       createdAt: new Date().toISOString(),
+      ...(model && { model }), // Add model only if provided
     }
 
     // Get current chat to access existing messages (select only needed fields)

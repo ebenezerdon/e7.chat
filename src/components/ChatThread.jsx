@@ -24,6 +24,7 @@ const Message = ({
   onRegenerate,
   messageIndex,
   isRegenerating,
+  model,
 }) => {
   const [downloadState, setDownloadState] = useState('idle') // idle, downloading, success
   const [downloadProgress, setDownloadProgress] = useState(0)
@@ -196,6 +197,11 @@ const Message = ({
       <div className="message-content-wrapper">
         <span className="message-sender">
           {role === 'user' ? 'You' : 'AI Assistant'}
+          {role === 'assistant' && model && (
+            <span className="model-badge" title={`Generated with ${model}`}>
+              {model.split('/').pop()}
+            </span>
+          )}
           {isSaving && (
             <span className="saving-indicator" title="Saving message...">
               ●

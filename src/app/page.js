@@ -65,8 +65,21 @@ export default function Chat() {
         const messageId = message.id || Date.now()
         setSavingMessages((prev) => new Set([...prev, messageId]))
 
-        saveMessage(user, currentChatId, message.role, message.content)
+        saveMessage(
+          user,
+          currentChatId,
+          message.role,
+          message.content,
+          selectedModel,
+        )
           .then(() => {
+            // Update the message in UI state to include model information
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === message.id ? { ...msg, model: selectedModel } : msg,
+              ),
+            )
+
             setSavingMessages((prev) => {
               const newSet = new Set(prev)
               newSet.delete(messageId)
@@ -461,7 +474,7 @@ export default function Chat() {
       setSavingMessages((prev) => new Set([...prev, userMessageId]))
 
       try {
-        await saveMessage(user, currentChatId, 'user', userMessageContent)
+        await saveMessage(user, currentChatId, 'user', userMessageContent, null)
         setSavingMessages((prev) => {
           const newSet = new Set(prev)
           newSet.delete(userMessageId)
@@ -565,6 +578,7 @@ export default function Chat() {
         ...newMessages[messageIndex],
         id: `regenerated-${Date.now()}`,
         content: '',
+        model: modelId,
       }
       setMessages(newMessages)
 
@@ -589,6 +603,7 @@ export default function Chat() {
                   updated[messageIndex] = {
                     ...updated[messageIndex],
                     content: accumulatedContent,
+                    model: modelId,
                   }
                   return updated
                 })
@@ -611,6 +626,7 @@ export default function Chat() {
             currentChatId,
             'assistant',
             accumulatedContent,
+            modelId,
           )
           setSavingMessages((prev) => {
             const newSet = new Set(prev)
