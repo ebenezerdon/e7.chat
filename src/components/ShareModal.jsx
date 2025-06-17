@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Copy, Check, X, Share2, ExternalLink } from 'lucide-react'
 import { shareChat, unshareChat, getChatShareStatus } from '../lib/db'
 import { useAuth } from '../lib/auth'
@@ -9,12 +9,47 @@ const ShareModal = ({ isOpen, onClose, chatId, chatTitle }) => {
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
+  const [isAnimating, setIsAnimating] = useState(false)
+  const modalRef = useRef(null)
 
   useEffect(() => {
     if (isOpen && chatId && user) {
       checkShareStatus()
+      // Small delay to ensure initial state is rendered before animation
+      const timer = setTimeout(() => {
+        setIsAnimating(true)
+      }, 10)
+      return () => clearTimeout(timer)
+    } else {
+      setIsAnimating(false)
     }
   }, [isOpen, chatId, user])
+
+  // Handle ESC key press and prevent body scroll
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape' && isOpen) {
+        onClose()
+      }
+    }
+
+    if (isOpen) {
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden'
+      document.addEventListener('keydown', handleEscKey)
+      return () => {
+        document.body.style.overflow = 'unset'
+        document.removeEventListener('keydown', handleEscKey)
+      }
+    }
+  }, [isOpen, onClose])
+
+  // Handle click outside modal
+  const handleOverlayClick = (event) => {
+    if (modalRef.current && !modalRef.current.contains(event.target)) {
+      onClose()
+    }
+  }
 
   const checkShareStatus = async () => {
     try {
@@ -84,8 +119,16 @@ const ShareModal = ({ isOpen, onClose, chatId, chatTitle }) => {
   if (!isOpen) return null
 
   return (
-    <div className="share-modal-overlay">
-      <div className="share-modal">
+    <div
+      className={`share-modal-overlay ${
+        isAnimating ? 'share-modal-overlay-animate' : ''
+      }`}
+      onClick={handleOverlayClick}
+    >
+      <div
+        className={`share-modal ${isAnimating ? 'share-modal-animate' : ''}`}
+        ref={modalRef}
+      >
         <div className="share-modal-header">
           <div className="share-modal-title">
             <Share2 size={20} />
