@@ -1,18 +1,9 @@
-import {
-  User,
-  Download,
-  Loader2,
-  Check,
-  FileText,
-  RotateCcw,
-  ChevronDown,
-  Star,
-  ExternalLink,
-} from 'lucide-react'
+import { User, Download, Loader2, Check, FileText } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import ImageGenerationAnimation from './ImageGenerationAnimation'
 import CodeBlock from './CodeBlock'
+import RegenerateDropdown from './RegenerateDropdown'
 
 const Message = ({
   role,
@@ -30,93 +21,6 @@ const Message = ({
   const [downloadState, setDownloadState] = useState('idle') // idle, downloading, success
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [downloadText, setDownloadText] = useState('Download')
-  const [showRegenerateDropdown, setShowRegenerateDropdown] = useState(false)
-  const [availableModels, setAvailableModels] = useState({})
-  const [loadingModels, setLoadingModels] = useState(true)
-  const [createNewChat, setCreateNewChat] = useState(false)
-  const regenerateRef = useRef(null)
-
-  // Load available models when component mounts
-  useEffect(() => {
-    fetchAvailableModels()
-  }, [])
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        regenerateRef.current &&
-        !regenerateRef.current.contains(event.target)
-      ) {
-        setShowRegenerateDropdown(false)
-      }
-    }
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        setShowRegenerateDropdown(false)
-      }
-    }
-
-    if (showRegenerateDropdown) {
-      document.addEventListener('mousedown', handleClickOutside)
-      document.addEventListener('keydown', handleKeyDown)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [showRegenerateDropdown])
-
-  const fetchAvailableModels = async () => {
-    try {
-      const response = await fetch('/api/chat')
-      if (response.ok) {
-        const data = await response.json()
-        setAvailableModels(data.providers || {})
-      }
-    } catch (error) {
-      console.error('Failed to fetch models:', error)
-    } finally {
-      setLoadingModels(false)
-    }
-  }
-
-  const handleRegenerateWithModel = (modelId) => {
-    if (onRegenerate && messageIndex !== undefined) {
-      onRegenerate(messageIndex, modelId, createNewChat)
-      setShowRegenerateDropdown(false)
-      setCreateNewChat(false) // Reset toggle after use
-    }
-  }
-
-  const getFeaturedModels = () => {
-    const featured = []
-    const featuredIds = [
-      'openai/gpt-4o',
-      'openai/gpt-4o-mini',
-      'anthropic/claude-3.5-sonnet',
-      'google/gemini-flash-1.5',
-      'deepseek/deepseek-chat',
-    ]
-
-    for (const [providerId, provider] of Object.entries(availableModels)) {
-      for (const [modelId, model] of Object.entries(provider.models)) {
-        if (featuredIds.includes(modelId)) {
-          featured.push({
-            id: modelId,
-            name: model.name,
-            description: model.description,
-            pricing: model.pricing,
-            provider: provider.name,
-            featured: model.featured,
-          })
-        }
-      }
-    }
-    return featured
-  }
 
   const handleDownload = async (imageUrl, filename) => {
     if (downloadState !== 'idle') return // Prevent multiple downloads
@@ -447,130 +351,11 @@ const Message = ({
 
           {/* Regenerate button for AI messages */}
           {role === 'assistant' && !type && onRegenerate && (
-            <div className="message-actions">
-              <div className="regenerate-container" ref={regenerateRef}>
-                <button
-                  onClick={() =>
-                    setShowRegenerateDropdown(!showRegenerateDropdown)
-                  }
-                  className={`regenerate-button ${
-                    isRegenerating ? 'regenerating' : ''
-                  }`}
-                  disabled={isRegenerating}
-                  title="Regenerate response with different model"
-                >
-                  <div className="regenerate-button-content">
-                    {isRegenerating ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <RotateCcw size={14} />
-                    )}
-                    <span>Regenerate</span>
-                    <ChevronDown
-                      size={12}
-                      className={`chevron ${
-                        showRegenerateDropdown ? 'rotate' : ''
-                      }`}
-                    />
-                  </div>
-                </button>
-
-                {showRegenerateDropdown && !loadingModels && (
-                  <div className="regenerate-dropdown">
-                    <div className="regenerate-dropdown-header">
-                      <span>Choose model to regenerate with:</span>
-                    </div>
-
-                    {/* New Chat Toggle */}
-                    <div className="regenerate-toggle-section">
-                      <label className="regenerate-toggle">
-                        <input
-                          type="checkbox"
-                          checked={createNewChat}
-                          onChange={(e) => setCreateNewChat(e.target.checked)}
-                          className="regenerate-checkbox"
-                        />
-                        <div className="regenerate-toggle-slider"></div>
-                        <div className="regenerate-toggle-content">
-                          <ExternalLink size={14} />
-                          <span>Open in new chat</span>
-                        </div>
-                      </label>
-                    </div>
-
-                    {/* Featured Models */}
-                    {getFeaturedModels().length > 0 && (
-                      <div className="featured-models-section">
-                        <div className="section-header">
-                          <Star size={12} />
-                          <span>Featured</span>
-                        </div>
-                        {getFeaturedModels().map((model) => (
-                          <button
-                            key={model.id}
-                            onClick={() => handleRegenerateWithModel(model.id)}
-                            className="model-item featured"
-                          >
-                            <div className="model-info">
-                              <div className="model-header">
-                                <span className="model-title">
-                                  {model.name}
-                                </span>
-                                <span className="model-pricing">
-                                  {model.pricing}
-                                </span>
-                              </div>
-                              <span className="model-desc">
-                                {model.description}
-                              </span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* All Models by Provider */}
-                    <div className="all-models-section">
-                      <div className="section-header">
-                        <span>All Models</span>
-                      </div>
-                      {Object.entries(availableModels).map(
-                        ([providerId, provider]) => (
-                          <div key={providerId} className="provider-group">
-                            <div className="provider-name">{provider.name}</div>
-                            {Object.entries(provider.models).map(
-                              ([modelId, model]) => (
-                                <button
-                                  key={modelId}
-                                  onClick={() =>
-                                    handleRegenerateWithModel(modelId)
-                                  }
-                                  className="model-item"
-                                >
-                                  <div className="model-info">
-                                    <div className="model-header">
-                                      <span className="model-title">
-                                        {model.name}
-                                      </span>
-                                      <span className="model-pricing">
-                                        {model.pricing}
-                                      </span>
-                                    </div>
-                                    <span className="model-desc">
-                                      {model.description}
-                                    </span>
-                                  </div>
-                                </button>
-                              ),
-                            )}
-                          </div>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <RegenerateDropdown
+              onRegenerate={onRegenerate}
+              messageIndex={messageIndex}
+              isRegenerating={isRegenerating}
+            />
           )}
         </div>
       </div>

@@ -722,6 +722,11 @@
     overflow-x: hidden;
   }
 
+  /* Allow regenerate dropdown to overflow on mobile */
+  .message-wrapper.dropdown-open {
+    overflow: visible !important;
+  }
+
   .message-content-wrapper {
     max-width: calc(100vw - 80px) !important;
     min-width: 0;
@@ -732,6 +737,11 @@
     overflow-x: hidden;
     word-wrap: break-word;
     overflow-wrap: break-word;
+  }
+
+  /* Allow regenerate dropdown to overflow on mobile */
+  .message-content.dropdown-open {
+    overflow: visible !important;
   }
 
   .markdown-content {
@@ -785,10 +795,14 @@
 /* Regenerate functionality styles */
 .message-actions {
   @apply mt-3 flex justify-start gap-2;
+  /* Allow dropdown to overflow container */
+  overflow: visible;
 }
 
 .regenerate-container {
   @apply relative;
+  /* Ensure dropdown can escape parent overflow constraints */
+  z-index: 1;
 }
 
 .regenerate-button {
@@ -821,11 +835,24 @@
 }
 
 .regenerate-dropdown {
-  @apply absolute bottom-full left-0 mb-1 border border-[#3a404b]/70 rounded-lg z-50 min-w-80 max-w-96 max-h-96 overflow-y-auto;
-  animation: slideDown 0.15s ease-out;
+  @apply absolute left-0 border border-[#3a404b]/70 rounded-lg min-w-80 max-w-96 max-h-96 overflow-y-auto;
+  z-index: 9999;
+  opacity: 1;
   background: linear-gradient(to bottom, #2c313a, #252a32);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Position above the button (default) */
+.regenerate-dropdown-up {
+  @apply bottom-full mb-1;
+  animation: slideDown 0.15s ease-out forwards;
+}
+
+/* Position below the button */
+.regenerate-dropdown-down {
+  @apply top-full mt-1;
+  animation: slideDown 0.15s ease-out forwards;
 }
 
 .regenerate-dropdown-header {
