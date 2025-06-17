@@ -129,7 +129,7 @@ function validateRequest(body, apiKey) {
     )
   }
 
-  return { messages, model: model || 'openai/gpt-4o' }
+  return { messages, model: model || 'openai/gpt-4o-mini' }
 }
 
 function createErrorResponse(error, status = 500) {
@@ -196,7 +196,7 @@ export async function GET() {
     return Response.json({
       providers: CURATED_MODELS,
       defaultProvider: 'openai',
-      defaultModel: 'openai/gpt-4o',
+      defaultModel: 'openai/gpt-4o-mini',
       featured: [
         'openai/gpt-4o',
         'openai/gpt-4o-mini',

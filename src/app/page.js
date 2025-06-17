@@ -10,8 +10,10 @@ import {
   deleteChat,
   getChat,
   getChatsCostOptimized,
+  saveUserPreference,
+  getUserPreferences,
 } from '../lib/db'
-import { databases, DATABASE_ID } from '../lib/appwrite'
+import { databases, DATABASE_ID, account } from '../lib/appwrite'
 import { useRouter } from 'next/navigation'
 import {
   SendHorizontal,
@@ -51,8 +53,22 @@ export default function Chat() {
   // File attachments state
   const [attachedFiles, setAttachedFiles] = useState(null)
 
+  // User preferences state
+  const [userPreferences, setUserPreferences] = useState({})
+
+  // Function to get smart default model based on preferences and API key
+  const getDefaultModel = () => {
+    // Priority: saved preference > API key based default > fallback
+    if (userPreferences.lastUsedModel) {
+      return userPreferences.lastUsedModel
+    }
+    return userApiKey ? 'openai/gpt-4o' : 'openai/gpt-4o-mini'
+  }
+
   // LLM model selection state (simplified for OpenRouter)
-  const [selectedModel, setSelectedModel] = useState('openai/gpt-4o')
+  const [selectedModel, setSelectedModel] = useState(
+    userApiKey ? 'openai/gpt-4o' : 'openai/gpt-4o-mini',
+  )
 
   // Regenerate state
   const [regeneratingMessageIndex, setRegeneratingMessageIndex] = useState(null)
@@ -550,6 +566,25 @@ export default function Chat() {
     router.push(`/?chatId=${chatId}`)
   }
 
+  // Handle model selection with preference saving
+  const handleModelChange = async (newModel) => {
+    setSelectedModel(newModel)
+
+    // Save user preference if user is logged in
+    if (user) {
+      try {
+        await saveUserPreference(account, 'lastUsedModel', newModel)
+        setUserPreferences((prev) => ({
+          ...prev,
+          lastUsedModel: newModel,
+        }))
+      } catch (error) {
+        console.error('Failed to save model preference:', error)
+        // Continue anyway - don't block user from using the model
+      }
+    }
+  }
+
   const handleRegenerate = async (
     messageIndex,
     modelId,
@@ -726,6 +761,30 @@ export default function Chat() {
     }
   }
 
+  // Load user preferences when user logs in
+  useEffect(() => {
+    const loadUserPreferences = async () => {
+      if (user) {
+        try {
+          const preferences = await getUserPreferences(account)
+          setUserPreferences(preferences)
+
+          // Update selected model if user has a saved preference
+          if (preferences.lastUsedModel) {
+            setSelectedModel(preferences.lastUsedModel)
+          }
+        } catch (error) {
+          console.error('Failed to load user preferences:', error)
+        }
+      } else {
+        // Clear preferences when user logs out
+        setUserPreferences({})
+      }
+    }
+
+    loadUserPreferences()
+  }, [user])
+
   // Load chats when user logs in or out
   useEffect(() => {
     loadChats()
@@ -823,6 +882,20 @@ export default function Chat() {
       chatThreadRef.current.scrollTop = chatThreadRef.current.scrollHeight
     }
   }, [messages, currentChatId])
+
+  // Update default model when API key status changes (only if no saved preference)
+  useEffect(() => {
+    // Don't override if user has a saved preference
+    if (userPreferences.lastUsedModel) return
+
+    // Only update if user doesn't have a manually selected model preference
+    if (userApiKey && selectedModel === 'openai/gpt-4o-mini') {
+      setSelectedModel('openai/gpt-4o')
+    } else if (!userApiKey && selectedModel !== 'openai/gpt-4o-mini') {
+      // When API key is removed, fall back to free tier model
+      setSelectedModel('openai/gpt-4o-mini')
+    }
+  }, [userApiKey, selectedModel, userPreferences.lastUsedModel])
 
   // Load user's API key on component mount and sync with cloud
   useEffect(() => {
@@ -1029,7 +1102,9 @@ export default function Chat() {
           <form onSubmit={handleChatSubmit} className="input-form">
             <ModelSelector
               selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
+              onModelChange={handleModelChange}
+              hasApiKey={!!userApiKey}
+              onApiKeyRequired={() => setShowApiKeyModal(true)}
             />
             <FileUpload
               files={attachedFiles}
