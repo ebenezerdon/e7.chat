@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react'
 import ChatOptionsModal from './ChatOptionsModal'
+import Logo from './Logo'
 import '../styles/sidebar.css'
 
 export default function Sidebar({
@@ -107,7 +108,10 @@ export default function Sidebar({
 
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <h2 className="sidebar-title">e7.chat</h2>
+          <div className="sidebar-title">
+            <Logo size={24} />
+            <span>e7.chat</span>
+          </div>
           <button
             onClick={() => {
               initializeNewChat()

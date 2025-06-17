@@ -29,7 +29,7 @@
 }
 
 .sidebar-title {
-  @apply text-lg sm:text-xl font-semibold tracking-tight text-gray-100;
+  @apply text-lg sm:text-xl font-semibold tracking-tight text-gray-100 flex items-center gap-2;
 }
 
 .new-chat-button {
