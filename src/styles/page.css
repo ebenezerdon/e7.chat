@@ -679,6 +679,17 @@
   }
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
   .model-dropdown {
@@ -765,4 +776,121 @@
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
+}
+
+/* Regenerate functionality styles */
+.message-actions {
+  @apply mt-3 flex justify-start;
+}
+
+.regenerate-container {
+  @apply relative;
+}
+
+.regenerate-button {
+  @apply flex items-center gap-2 px-3 py-2 bg-[#2c313a]/60 hover:bg-[#2c313a]/80 border border-[#3a404b]/30 hover:border-[#3a404b]/50 rounded-lg text-gray-300 hover:text-gray-100 text-sm transition-all duration-200 cursor-pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.regenerate-button:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.regenerate-button:disabled {
+  @apply opacity-60 cursor-not-allowed;
+}
+
+.regenerate-button.regenerating {
+  @apply bg-blue-600/20 border-blue-500/30 text-blue-300;
+}
+
+.regenerate-button-content {
+  @apply flex items-center gap-2;
+}
+
+.regenerate-button .chevron {
+  @apply transition-transform duration-200;
+}
+
+.regenerate-button .chevron.rotate {
+  @apply rotate-180;
+}
+
+.regenerate-dropdown {
+  @apply absolute bottom-full left-0 mb-1 border border-[#3a404b]/70 rounded-lg z-50 min-w-80 max-w-96 max-h-96 overflow-y-auto;
+  animation: slideDown 0.15s ease-out;
+  background: linear-gradient(to bottom, #2c313a, #252a32);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.regenerate-dropdown-header {
+  @apply px-4 py-3 border-b border-[#3a404b]/30 text-sm font-medium text-gray-200;
+}
+
+.regenerate-dropdown .featured-models-section {
+  @apply border-b border-[#3a404b]/30;
+}
+
+.regenerate-dropdown .section-header {
+  @apply flex items-center gap-2 px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-[#343a46]/50;
+}
+
+.regenerate-dropdown .provider-group {
+  @apply border-b border-[#3a404b]/20 last:border-b-0;
+}
+
+.regenerate-dropdown .provider-name {
+  @apply px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-[#343a46]/30;
+}
+
+.regenerate-dropdown .model-item {
+  @apply w-full text-left px-4 py-3 hover:bg-[#343a46]/60 transition-colors duration-150 border-none bg-transparent cursor-pointer;
+}
+
+.regenerate-dropdown .model-item:hover {
+  @apply text-gray-100;
+}
+
+.regenerate-dropdown .model-item.featured {
+  @apply bg-gradient-to-r from-purple-600/10 to-blue-600/10 hover:from-purple-600/20 hover:to-blue-600/20;
+}
+
+.regenerate-dropdown .model-info {
+  @apply flex flex-col gap-1;
+}
+
+.regenerate-dropdown .model-header {
+  @apply flex items-center justify-between;
+}
+
+.regenerate-dropdown .model-title {
+  @apply text-sm font-medium text-gray-200;
+}
+
+.regenerate-dropdown .model-pricing {
+  @apply text-xs text-gray-400;
+}
+
+.regenerate-dropdown .model-desc {
+  @apply text-xs text-gray-400 leading-relaxed;
+}
+
+/* Mobile adjustments for regenerate */
+@media (max-width: 640px) {
+  .regenerate-dropdown {
+    @apply min-w-72 max-w-80 max-h-80;
+  }
+
+  .regenerate-button {
+    @apply px-2 py-1.5 text-xs;
+  }
+
+  .regenerate-dropdown .model-item {
+    @apply px-3 py-2;
+  }
+
+  .regenerate-dropdown-header {
+    @apply px-3 py-2 text-xs;
+  }
 }
