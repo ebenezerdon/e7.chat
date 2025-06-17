@@ -619,7 +619,7 @@
     -webkit-overflow-scrolling: touch;
     padding: 1rem;
     padding-top: 1rem;
-    padding-bottom: calc(7vh + 4rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(15vh + 4rem + env(safe-area-inset-bottom, 0));
     will-change: transform;
   }
 
