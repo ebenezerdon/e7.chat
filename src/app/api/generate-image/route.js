@@ -14,8 +14,21 @@ export async function POST(req) {
       return Response.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
+    // Check for user's OpenAI API key in headers
+    const userApiKey = req.headers.get('X-User-API-Key')
+    const apiKey = userApiKey || process.env.OPENAI_API_KEY
+
+    if (!apiKey) {
+      return Response.json(
+        {
+          error: 'OpenAI API key is required. Please add your OpenAI API key.',
+        },
+        { status: 401 },
+      )
+    }
+
     const openai = createOpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: apiKey,
     })
 
     // Use DALL-E 3 for image generation
@@ -24,7 +37,7 @@ export async function POST(req) {
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

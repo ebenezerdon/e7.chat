@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Image, Loader2, Download } from 'lucide-react'
 
-const ImageGenerator = ({ onImageGenerated, disabled }) => {
+const ImageGenerator = ({ onImageGenerated, disabled, userOpenAiKey }) => {
   const [prompt, setPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedImage, setGeneratedImage] = useState(null)
@@ -34,6 +34,7 @@ const ImageGenerator = ({ onImageGenerated, disabled }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(userOpenAiKey && { 'X-User-API-Key': userOpenAiKey }),
         },
         body: JSON.stringify({
           prompt: prompt.trim(),

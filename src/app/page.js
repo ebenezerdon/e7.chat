@@ -50,7 +50,8 @@ export default function Chat() {
   const [currentChat, setCurrentChat] = useState(null)
   const [chatsLoading, setChatsLoading] = useState(true)
   const [savingMessages, setSavingMessages] = useState(new Set())
-  const [userApiKey, setUserApiKey] = useState(null)
+  const [userApiKey, setUserApiKey] = useState(null) // OpenRouter API key
+  const [userOpenAiKey, setUserOpenAiKey] = useState(null) // OpenAI API key
 
   // File attachments state
   const [attachedFiles, setAttachedFiles] = useState(null)
@@ -325,6 +326,10 @@ export default function Chat() {
 
     try {
       console.log('Generating image for prompt:', prompt)
+      console.log(
+        'Using OpenAI API key:',
+        userOpenAiKey ? 'User key present' : 'No user key',
+      )
 
       // Add user message to chat immediately
       const userMessage = {
@@ -358,6 +363,7 @@ export default function Chat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(userOpenAiKey && { 'X-User-API-Key': userOpenAiKey }),
         },
         body: JSON.stringify({
           prompt: prompt,
@@ -993,57 +999,82 @@ export default function Chat() {
     }
   }, [userApiKey, selectedModel, userPreferences.lastUsedModel])
 
-  // Load user's API key on component mount and sync with cloud
+  // Load user's API keys on component mount and sync with cloud
   useEffect(() => {
-    const loadApiKey = async () => {
+    const loadApiKeys = async () => {
+      // Simple decrypt function (same as in ApiKeyModal)
+      const decrypt = (encryptedText, key) => {
+        const keyBuffer = Buffer.from(key, 'utf8')
+        const encryptedBuffer = Buffer.from(encryptedText, 'base64')
+        const decrypted = Buffer.alloc(encryptedBuffer.length)
+        for (let i = 0; i < encryptedBuffer.length; i++) {
+          decrypted[i] = encryptedBuffer[i] ^ keyBuffer[i % keyBuffer.length]
+        }
+        return decrypted.toString('utf8')
+      }
+
       if (user) {
-        // User is logged in - check cloud first, then local
+        // User is logged in - check cloud first, then local for both providers
         try {
           const { Query } = await import('appwrite')
-          const documents = await databases.listDocuments(
+
+          // Load OpenRouter key
+          const openrouterDocs = await databases.listDocuments(
             DATABASE_ID,
             'api_keys',
-            [Query.equal('userId', user.$id)],
+            [
+              Query.equal('userId', user.$id),
+              Query.equal('provider', 'openrouter'),
+            ],
           )
 
-          if (documents.total > 0) {
-            const keyDoc = documents.documents[0]
-            // Simple decrypt function (same as in ApiKeyModal)
-            const decrypt = (encryptedText, key) => {
-              const keyBuffer = Buffer.from(key, 'utf8')
-              const encryptedBuffer = Buffer.from(encryptedText, 'base64')
-              const decrypted = Buffer.alloc(encryptedBuffer.length)
-              for (let i = 0; i < encryptedBuffer.length; i++) {
-                decrypted[i] =
-                  encryptedBuffer[i] ^ keyBuffer[i % keyBuffer.length]
-              }
-              return decrypted.toString('utf8')
-            }
-
+          if (openrouterDocs.total > 0) {
+            const keyDoc = openrouterDocs.documents[0]
             const decryptedKey = decrypt(keyDoc.encryptedKey, user.$id)
             setUserApiKey(decryptedKey)
-            return
           } else {
             // No cloud key found, check localStorage
             const savedKey = localStorage.getItem('userOpenRouterApiKey')
             setUserApiKey(savedKey || null)
-            return
+          }
+
+          // Load OpenAI key
+          const openaiDocs = await databases.listDocuments(
+            DATABASE_ID,
+            'api_keys',
+            [
+              Query.equal('userId', user.$id),
+              Query.equal('provider', 'openai'),
+            ],
+          )
+
+          if (openaiDocs.total > 0) {
+            const keyDoc = openaiDocs.documents[0]
+            const decryptedKey = decrypt(keyDoc.encryptedKey, user.$id)
+            setUserOpenAiKey(decryptedKey)
+          } else {
+            // No cloud key found, check localStorage
+            const savedKey = localStorage.getItem('userOpenAiApiKey')
+            setUserOpenAiKey(savedKey || null)
           }
         } catch (error) {
-          console.error('Failed to load cloud API key:', error)
+          console.error('Failed to load cloud API keys:', error)
           // Fallback to localStorage on error
-          const savedKey = localStorage.getItem('userOpenRouterApiKey')
-          setUserApiKey(savedKey || null)
-          return
+          const openrouterKey = localStorage.getItem('userOpenRouterApiKey')
+          const openaiKey = localStorage.getItem('userOpenAiApiKey')
+          setUserApiKey(openrouterKey || null)
+          setUserOpenAiKey(openaiKey || null)
         }
       } else {
         // Guest mode - only check localStorage
-        const savedKey = localStorage.getItem('userOpenRouterApiKey')
-        setUserApiKey(savedKey || null)
+        const openrouterKey = localStorage.getItem('userOpenRouterApiKey')
+        const openaiKey = localStorage.getItem('userOpenAiApiKey')
+        setUserApiKey(openrouterKey || null)
+        setUserOpenAiKey(openaiKey || null)
       }
     }
 
-    loadApiKey()
+    loadApiKeys()
   }, [user])
 
   if (authLoading || chatsLoading) {
@@ -1257,9 +1288,13 @@ export default function Chat() {
         isOpen={showApiKeyModal}
         onClose={() => setShowApiKeyModal(false)}
         user={user}
-        onSave={(apiKey, keyData, synced) => {
-          setUserApiKey(apiKey)
-          setShowApiKeyModal(false)
+        onSave={(provider, apiKey, keyData, synced) => {
+          if (provider === 'openrouter') {
+            setUserApiKey(apiKey)
+          } else if (provider === 'openai') {
+            setUserOpenAiKey(apiKey)
+          }
+          // Don't close modal automatically - let user manage multiple keys
         }}
       />
 
