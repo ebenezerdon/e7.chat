@@ -78,7 +78,7 @@ const SharedChatPage = () => {
             }}
           >
             <ExternalLink size={16} />
-            Go to AI Chat
+            Go to e7.chat
           </Link>
         </div>
       </div>

@@ -12,7 +12,7 @@ const openrouter = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   defaultHeaders: {
     'HTTP-Referer': 'https://localhost:3000',
-    'X-Title': 'E7 Chat Test',
+    'X-Title': 'e7.chat Test',
   },
 })
 
