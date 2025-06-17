@@ -85,6 +85,10 @@
   animation: pulse 1.5s ease-in-out infinite;
 }
 
+.model-badge {
+  @apply ml-2 px-2 py-0.5 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded text-xs text-purple-300 font-medium;
+}
+
 @keyframes pulse {
   0%,
   100% {
