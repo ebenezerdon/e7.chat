@@ -699,3 +699,70 @@
   border-top: 1px solid var(--border);
   position: relative;
 }
+
+/* Additional mobile responsiveness for code blocks */
+@media (max-width: 640px) {
+  .message-wrapper {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .message-content-wrapper {
+    max-width: calc(100vw - 80px) !important;
+    min-width: 0;
+  }
+
+  .message-content {
+    max-width: 100% !important;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .markdown-content {
+    overflow-x: hidden;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .markdown-content * {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Ensure code blocks don't overflow on mobile */
+  .markdown-content pre {
+    overflow-x: auto !important;
+    max-width: calc(100vw - 100px) !important;
+  }
+
+  /* Force code containers to be constrained */
+  .markdown-content > div {
+    max-width: 100% !important;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5563 #1f2937;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
