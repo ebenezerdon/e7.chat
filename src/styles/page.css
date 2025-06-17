@@ -162,11 +162,11 @@
 }
 
 .input-form {
-  @apply flex items-center w-full max-w-5xl mx-auto;
+  @apply flex items-center gap-3 w-full max-w-5xl;
 }
 
 .input-field {
-  @apply bg-gradient-to-r from-[#2c313a] to-[#2e333d] rounded-xl sm:rounded-2xl px-4 sm:px-8 py-3 sm:py-5 outline-none focus:ring-1 focus:ring-blue-500/70 focus:border-blue-500/50 transition-all text-[15px] sm:text-[17px] tracking-wide font-normal w-full h-12 sm:h-14 border border-[#3a404b]/30;
+  @apply bg-gradient-to-r from-[#2c313a] to-[#2e333d] rounded-xl sm:rounded-2xl px-4 sm:px-8 py-3 sm:py-5 outline-none focus:ring-1 focus:ring-blue-500/70 focus:border-blue-500/50 transition-all text-[15px] sm:text-[17px] tracking-wide font-normal flex-1 h-12 sm:h-14 border border-[#3a404b]/30;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -537,4 +537,65 @@
     transform: scale(1);
     opacity: 1;
   }
+}
+
+/* Model Selector Styles */
+.model-selector-container {
+  @apply relative;
+}
+
+.model-selector-pill {
+  @apply flex items-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-[#2c313a] to-[#2e333d] text-gray-300 text-sm rounded-xl hover:from-[#343a46] hover:to-[#363b47] transition-all duration-200 cursor-pointer border border-[#3a404b]/30;
+  height: 3rem; /* Match input field height */
+  width: 140px; /* Fixed width */
+  flex-shrink: 0; /* Don't shrink */
+}
+
+.model-selector-pill.loading {
+  @apply opacity-60 cursor-not-allowed;
+}
+
+.model-name {
+  @apply text-sm text-gray-300 font-normal truncate;
+}
+
+.chevron {
+  @apply w-3 h-3 text-gray-400 transition-transform duration-200;
+}
+
+.chevron.rotate {
+  @apply rotate-180;
+}
+
+.model-dropdown {
+  @apply absolute bottom-full left-0 mb-2 bg-[#2c313a] border border-[#3a404b] rounded-xl shadow-2xl z-50 min-w-72 max-h-80 overflow-y-auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.provider-group {
+  @apply first:pt-2 last:pb-2;
+}
+
+.provider-name {
+  @apply px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide;
+}
+
+.model-item {
+  @apply w-full text-left px-4 py-2.5 hover:bg-[#343a46]/60 transition-colors border-0 cursor-pointer;
+}
+
+.model-item.active {
+  @apply bg-blue-600/15 text-blue-400;
+}
+
+.model-info {
+  @apply flex flex-col gap-0.5;
+}
+
+.model-title {
+  @apply text-sm font-medium text-gray-200;
+}
+
+.model-desc {
+  @apply text-xs text-gray-500;
 }

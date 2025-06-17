@@ -19,6 +19,7 @@ import Sidebar from '@/components/Sidebar'
 import { useAuth } from '../lib/auth'
 import AuthModal from '@/components/AuthModal'
 import UserMenu from '@/components/UserMenu'
+import ModelSelector from '@/components/ModelSelector'
 
 export default function Chat() {
   const router = useRouter()
@@ -32,6 +33,10 @@ export default function Chat() {
   const [chatsLoading, setChatsLoading] = useState(true)
   const [savingMessages, setSavingMessages] = useState(new Set())
 
+  // LLM provider and model selection state
+  const [selectedProvider, setSelectedProvider] = useState('openai')
+  const [selectedModel, setSelectedModel] = useState('')
+
   const {
     messages,
     input,
@@ -41,6 +46,10 @@ export default function Chat() {
     setInput,
     status,
   } = useChat({
+    body: {
+      provider: selectedProvider,
+      model: selectedModel,
+    },
     onFinish: (message) => {
       // Save assistant message to database in the background (non-blocking)
       if (currentChatId && message.role === 'assistant' && user) {
@@ -238,12 +247,12 @@ export default function Chat() {
       }
     }
 
-    // Check if message contains "generate/create/make/draw + image/picture"
+    // Check if message contains "generate/create/make/draw + image/picture" with optional adjectives
     const containsPattern =
-      /\b(generate|create|make|draw|show me)\s+(an?\s+)?(image|picture|photo)\s+(of|for|showing|with)?\s*(.+)/i
+      /\b(generate|create|make|draw|show me)\s+(an?\s+)?([a-z\s]*\s+)?(image|picture|photo)\s+(of|for|showing|with)?\s*(.+)/i
     const match = lowerMessage.match(containsPattern)
-    if (match && match[5]) {
-      return match[5].trim()
+    if (match && match[6]) {
+      return match[6].trim()
     }
 
     return null
@@ -294,7 +303,7 @@ export default function Chat() {
         body: JSON.stringify({
           prompt: prompt,
           size: '1024x1024',
-          quality: 'standard',
+          quality: 'auto',
         }),
       })
 
@@ -640,6 +649,12 @@ export default function Chat() {
 
         <div className="input-area">
           <form onSubmit={handleChatSubmit} className="input-form">
+            <ModelSelector
+              selectedProvider={selectedProvider}
+              selectedModel={selectedModel}
+              onProviderChange={setSelectedProvider}
+              onModelChange={setSelectedModel}
+            />
             <input
               value={input}
               placeholder={
