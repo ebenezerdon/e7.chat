@@ -1020,11 +1020,19 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
+  backdrop-filter: blur(0px);
+  transition: background-color 0.3s ease-out, backdrop-filter 0.3s ease-out;
+  /* Prevent layout shift */
+  will-change: background-color, backdrop-filter;
+}
+
+.share-modal-overlay-animate {
+  background-color: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
 }
 
@@ -1038,6 +1046,18 @@
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4),
     0 10px 10px -5px rgba(0, 0, 0, 0.2);
   overflow: hidden;
+  opacity: 0;
+  transform: scale(0.95) translateY(-10px);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  /* Prevent layout shift */
+  will-change: opacity, transform;
+  /* Ensure modal doesn't affect layout flow */
+  position: relative;
+}
+
+.share-modal-animate {
+  opacity: 1;
+  transform: scale(1) translateY(0);
 }
 
 .share-modal-header {
