@@ -1,15 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Star } from 'lucide-react'
 
-const ModelSelector = ({
-  selectedProvider = 'openai',
-  selectedModel,
-  onProviderChange,
-  onModelChange,
-}) => {
+const ModelSelector = ({ selectedModel = 'openai/gpt-4o', onModelChange }) => {
   const [providers, setProviders] = useState({})
+  const [featuredModels, setFeaturedModels] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModels, setShowModels] = useState(false)
   const containerRef = useRef(null)
@@ -62,6 +58,7 @@ const ModelSelector = ({
       if (response.ok) {
         const data = await response.json()
         setProviders(data.providers || {})
+        setFeaturedModels(data.featured || [])
       }
     } catch (error) {
       console.error('Failed to fetch providers:', error)
@@ -70,9 +67,51 @@ const ModelSelector = ({
     }
   }
 
-  const currentProvider = providers[selectedProvider]
-  const currentModel = selectedModel || currentProvider?.defaultModel
-  const modelName = currentProvider?.models[currentModel]?.name || 'GPT-4o'
+  // Find current model info
+  const getCurrentModelInfo = () => {
+    for (const [providerId, provider] of Object.entries(providers)) {
+      for (const [modelId, model] of Object.entries(provider.models)) {
+        if (modelId === selectedModel) {
+          return {
+            name: model.name,
+            description: model.description,
+            provider: provider.name,
+            pricing: model.pricing,
+            featured: model.featured,
+          }
+        }
+      }
+    }
+
+    // Fallback if model not found
+    return {
+      name: selectedModel.split('/').pop() || 'GPT-4o',
+      description: 'AI Model',
+      provider: 'Unknown',
+    }
+  }
+
+  // Get featured models for quick access
+  const getFeaturedModels = () => {
+    const featured = []
+    for (const [providerId, provider] of Object.entries(providers)) {
+      for (const [modelId, model] of Object.entries(provider.models)) {
+        if (featuredModels.includes(modelId)) {
+          featured.push({
+            id: modelId,
+            name: model.name,
+            description: model.description,
+            pricing: model.pricing,
+            provider: provider.name,
+          })
+        }
+      }
+    }
+    return featured
+  }
+
+  const currentModelInfo = getCurrentModelInfo()
+  const featured = getFeaturedModels()
 
   if (loading) {
     return (
@@ -92,46 +131,93 @@ const ModelSelector = ({
           setShowModels(!showModels)
         }}
         className="model-selector-pill"
+        title={`${currentModelInfo.name} (${currentModelInfo.provider}) - ${
+          currentModelInfo.pricing || 'Pricing varies'
+        }`}
       >
-        <span className="model-name">{modelName}</span>
+        <div className="model-display">
+          <span className="model-name">{currentModelInfo.name}</span>
+          {currentModelInfo.featured && <Star className="featured-icon" />}
+        </div>
         <ChevronDown className={`chevron ${showModels ? 'rotate' : ''}`} />
       </button>
 
       {showModels && (
         <div className="model-dropdown">
-          {Object.entries(providers).map(([providerId, provider]) => (
-            <div key={providerId} className="provider-group">
-              <div className="provider-name">{provider.name}</div>
-              {Object.entries(provider.models).map(([modelId, model]) => (
+          {/* Featured Models Section */}
+          {featured.length > 0 && (
+            <div className="featured-section">
+              <div className="section-header">
+                <Star className="section-icon" />
+                <span>Featured Models</span>
+              </div>
+              {featured.map((model) => (
                 <button
-                  key={modelId}
-                  ref={
-                    selectedProvider === providerId && currentModel === modelId
-                      ? scrollToSelected
-                      : null
-                  }
+                  key={model.id}
+                  ref={selectedModel === model.id ? scrollToSelected : null}
                   type="button"
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    onProviderChange(providerId)
-                    onModelChange(modelId)
+                    onModelChange(model.id)
                     setShowModels(false)
                   }}
-                  className={`model-item ${
-                    selectedProvider === providerId && currentModel === modelId
-                      ? 'active'
-                      : ''
+                  className={`model-item featured ${
+                    selectedModel === model.id ? 'active' : ''
                   }`}
                 >
                   <div className="model-info">
-                    <span className="model-title">{model.name}</span>
+                    <div className="model-header">
+                      <span className="model-title">{model.name}</span>
+                      <span className="model-pricing">{model.pricing}</span>
+                    </div>
                     <span className="model-desc">{model.description}</span>
                   </div>
                 </button>
               ))}
             </div>
-          ))}
+          )}
+
+          {/* All Models by Provider */}
+          <div className="all-models-section">
+            <div className="section-header">
+              <span>All Models</span>
+            </div>
+            {Object.entries(providers).map(([providerId, provider]) => (
+              <div key={providerId} className="provider-group">
+                <div className="provider-name">{provider.name}</div>
+                {Object.entries(provider.models).map(([modelId, model]) => (
+                  <button
+                    key={modelId}
+                    ref={selectedModel === modelId ? scrollToSelected : null}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      onModelChange(modelId)
+                      setShowModels(false)
+                    }}
+                    className={`model-item ${
+                      selectedModel === modelId ? 'active' : ''
+                    } ${model.featured ? 'has-featured' : ''}`}
+                  >
+                    <div className="model-info">
+                      <div className="model-header">
+                        <span className="model-title">
+                          {model.name}
+                          {model.featured && (
+                            <Star className="featured-badge" />
+                          )}
+                        </span>
+                        <span className="model-pricing">{model.pricing}</span>
+                      </div>
+                      <span className="model-desc">{model.description}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

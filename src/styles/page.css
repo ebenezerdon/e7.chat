@@ -555,12 +555,20 @@
   @apply opacity-60 cursor-not-allowed;
 }
 
+.model-display {
+  @apply flex items-center gap-1 min-w-0 flex-1;
+}
+
 .model-name {
   @apply text-sm text-gray-300 font-normal truncate;
 }
 
+.featured-icon {
+  @apply w-3 h-3 text-yellow-400 flex-shrink-0;
+}
+
 .chevron {
-  @apply w-3 h-3 text-gray-400 transition-transform duration-200;
+  @apply w-3 h-3 text-gray-400 transition-transform duration-200 flex-shrink-0;
 }
 
 .chevron.rotate {
@@ -568,34 +576,116 @@
 }
 
 .model-dropdown {
-  @apply absolute bottom-full left-0 mb-2 bg-[#2c313a] border border-[#3a404b] rounded-xl shadow-2xl z-50 min-w-72 max-h-80 overflow-y-auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  @apply absolute bottom-full left-0 mb-2 bg-[#2c313a] border border-[#3a404b] rounded-xl shadow-2xl z-50 min-w-[320px] max-w-[400px] max-h-[60vh] overflow-y-auto;
 }
 
+/* Featured Models Section */
+.featured-section {
+  @apply border-b border-[#3a404b]/50 pb-2 mb-2;
+}
+
+.section-header {
+  @apply flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-400 uppercase tracking-wider;
+}
+
+.section-icon {
+  @apply w-3 h-3;
+}
+
+.all-models-section {
+  @apply pt-1;
+}
+
+/* Provider Groups */
 .provider-group {
-  @apply first:pt-2 last:pb-2;
+  @apply mb-2 last:mb-0;
 }
 
 .provider-name {
-  @apply px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide;
+  @apply px-3 py-1.5 text-xs font-medium text-gray-400 uppercase tracking-wider border-b border-[#3a404b]/30;
 }
 
+/* Model Items */
 .model-item {
-  @apply w-full text-left px-4 py-2.5 hover:bg-[#343a46]/60 transition-colors border-0 cursor-pointer;
+  @apply w-full text-left px-3 py-2.5 hover:bg-[#343a46] transition-colors duration-150 border-none bg-transparent cursor-pointer;
+}
+
+.model-item.featured {
+  @apply bg-gradient-to-r from-[#3a404b]/20 to-[#2c313a]/20 hover:from-[#3a404b]/30 hover:to-[#2c313a]/30;
 }
 
 .model-item.active {
-  @apply bg-blue-600/15 text-blue-400;
+  @apply bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-300;
+}
+
+.model-item.active.featured {
+  @apply bg-gradient-to-r from-yellow-600/20 to-orange-600/20 text-yellow-300;
 }
 
 .model-info {
-  @apply flex flex-col gap-0.5;
+  @apply space-y-1;
+}
+
+.model-header {
+  @apply flex items-center justify-between gap-2;
 }
 
 .model-title {
-  @apply text-sm font-medium text-gray-200;
+  @apply text-sm font-medium text-gray-200 flex items-center gap-1;
+}
+
+.featured-badge {
+  @apply w-3 h-3 text-yellow-400;
 }
 
 .model-desc {
-  @apply text-xs text-gray-500;
+  @apply text-xs text-gray-400 block;
+}
+
+.model-pricing {
+  @apply text-xs text-green-400 font-medium flex-shrink-0;
+}
+
+/* Scrollbar styling for the dropdown */
+.model-dropdown::-webkit-scrollbar {
+  @apply w-1;
+}
+
+.model-dropdown::-webkit-scrollbar-track {
+  @apply bg-[#2c313a];
+}
+
+.model-dropdown::-webkit-scrollbar-thumb {
+  @apply bg-[#3a404b] rounded-full;
+}
+
+.model-dropdown::-webkit-scrollbar-thumb:hover {
+  @apply bg-[#4a5058];
+}
+
+/* Animation for dropdown */
+.model-dropdown {
+  animation: slideUp 0.15s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .model-dropdown {
+    @apply min-w-[280px] max-w-[90vw] left-0 right-0 mx-auto;
+  }
+
+  .model-selector-pill {
+    @apply w-32;
+  }
 }
