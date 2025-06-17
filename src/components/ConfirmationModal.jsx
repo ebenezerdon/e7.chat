@@ -39,10 +39,16 @@ export default function ConfirmationModal({
     onClose()
   }
 
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose()
+    }
+  }
+
   if (!isOpen) return null
 
   return (
-    <div className="confirmation-modal-overlay">
+    <div className="confirmation-modal-overlay" onClick={handleOverlayClick}>
       <div
         ref={modalRef}
         className="confirmation-modal"
