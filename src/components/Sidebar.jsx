@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { PenLine, Menu } from 'lucide-react'
+import { PenLine, Menu, GitBranch } from 'lucide-react'
 import '../styles/sidebar.css'
 
 export default function Sidebar({
@@ -60,18 +60,27 @@ export default function Sidebar({
                 currentChatId === chat.$id ? 'chat-item-active' : ''
               } ${chat.isOptimistic ? 'chat-item-creating' : ''}`}
             >
-              <span
-                className={`chat-item-text ${
-                  currentChatId === chat.$id
-                    ? 'chat-item-text-active'
-                    : 'chat-item-text-inactive'
-                }`}
-              >
-                {chat.title || 'New Chat'}
-                {chat.isOptimistic && (
-                  <span className="chat-creating-indicator"> ●</span>
+              <div className="chat-item-content">
+                {chat.isBranch && (
+                  <GitBranch
+                    className="branch-icon"
+                    size={14}
+                    strokeWidth={1.5}
+                  />
                 )}
-              </span>
+                <span
+                  className={`chat-item-text ${
+                    currentChatId === chat.$id
+                      ? 'chat-item-text-active'
+                      : 'chat-item-text-inactive'
+                  }`}
+                >
+                  {chat.title || 'New Chat'}
+                  {chat.isOptimistic && (
+                    <span className="chat-creating-indicator"> ●</span>
+                  )}
+                </span>
+              </div>
             </Link>
           ))}
 

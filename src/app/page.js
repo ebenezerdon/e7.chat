@@ -13,7 +13,14 @@ import {
 } from '../lib/db'
 import { databases, DATABASE_ID } from '../lib/appwrite'
 import { useRouter } from 'next/navigation'
-import { SendHorizontal, MinusCircle, LogIn, Share2, Key } from 'lucide-react'
+import {
+  SendHorizontal,
+  MinusCircle,
+  LogIn,
+  Share2,
+  Key,
+  CornerUpRight,
+} from 'lucide-react'
 import ChatThread from '@/components/ChatThread'
 import '../styles/page.css'
 import Sidebar from '@/components/Sidebar'
@@ -563,10 +570,15 @@ export default function Chat() {
 
       // If creating new chat, handle branching
       if (createNewChat) {
-        // Create a new chat
+        // Create a new chat without "branch from" prefix in title
         const newChat = await createChat(
           user,
-          `Branch from ${currentChat?.title || 'Chat'}`,
+          currentChat?.title || 'New Chat',
+          {
+            isBranch: true,
+            parentChatId: currentChatId,
+            parentChatTitle: currentChat?.title || 'Chat',
+          },
         )
 
         // Save all the messages to the new chat
@@ -884,6 +896,18 @@ export default function Chat() {
               {currentChat?.title || 'New Chat'}
               {currentChatId?.startsWith('temp-') && (
                 <span className="creating-indicator"> (Creating...)</span>
+              )}
+              {currentChat?.isBranch && currentChat?.parentChatId && (
+                <button
+                  onClick={() => handleChatSelect(currentChat.parentChatId)}
+                  className="parent-chat-link"
+                  title={`Go to parent chat: ${
+                    currentChat?.parentChatTitle || 'Parent Chat'
+                  }`}
+                >
+                  <CornerUpRight size={12} strokeWidth={1.5} />
+                  <span>Go to parent branch</span>
+                </button>
               )}
             </h1>
             <div className="header-actions">
