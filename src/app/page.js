@@ -11,8 +11,9 @@ import {
   getChat,
   getChatsCostOptimized,
 } from '../lib/db'
+import { databases, DATABASE_ID } from '../lib/appwrite'
 import { useRouter } from 'next/navigation'
-import { SendHorizontal, MinusCircle, LogIn, Share2 } from 'lucide-react'
+import { SendHorizontal, MinusCircle, LogIn, Share2, Key } from 'lucide-react'
 import ChatThread from '@/components/ChatThread'
 import '../styles/page.css'
 import Sidebar from '@/components/Sidebar'
@@ -23,6 +24,7 @@ import ModelSelector from '@/components/ModelSelector'
 import FileUpload from '@/components/FileUpload'
 import AttachmentCount from '@/components/AttachmentCount'
 import ShareModal from '@/components/ShareModal'
+import ApiKeyModal from '@/components/ApiKeyModal'
 
 export default function Chat() {
   const router = useRouter()
@@ -32,10 +34,12 @@ export default function Chat() {
   const [currentChatId, setCurrentChatId] = useState(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false)
   const [chatsData, setChatsData] = useState([])
   const [currentChat, setCurrentChat] = useState(null)
   const [chatsLoading, setChatsLoading] = useState(true)
   const [savingMessages, setSavingMessages] = useState(new Set())
+  const [userApiKey, setUserApiKey] = useState(null)
 
   // File attachments state
   const [attachedFiles, setAttachedFiles] = useState(null)
@@ -57,6 +61,9 @@ export default function Chat() {
   } = useChat({
     body: {
       model: selectedModel,
+    },
+    headers: {
+      ...(userApiKey && { 'X-User-API-Key': userApiKey }),
     },
     onFinish: (message) => {
       // Clear attachments after message is sent
@@ -208,7 +215,10 @@ export default function Chat() {
     try {
       const response = await fetch('/api/generate-title', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(userApiKey && { 'X-User-API-Key': userApiKey }),
+        },
         body: JSON.stringify({ message }),
       })
 
@@ -583,6 +593,7 @@ export default function Chat() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(userApiKey && { 'X-User-API-Key': userApiKey }),
         },
         body: JSON.stringify({
           messages: messagesToRegenerate.map((msg) => ({
@@ -801,6 +812,56 @@ export default function Chat() {
     }
   }, [messages, currentChatId])
 
+  // Load user's API key on component mount and sync with cloud
+  useEffect(() => {
+    const loadApiKey = async () => {
+      if (user) {
+        // User is logged in - check cloud first, then local
+        try {
+          const { Query } = await import('appwrite')
+          const documents = await databases.listDocuments(
+            DATABASE_ID,
+            'api_keys',
+            [Query.equal('userId', user.$id)],
+          )
+
+          if (documents.total > 0) {
+            const keyDoc = documents.documents[0]
+            // Simple decrypt function (same as in ApiKeyModal)
+            const decrypt = (encryptedText, key) => {
+              const keyBuffer = Buffer.from(key, 'utf8')
+              const encryptedBuffer = Buffer.from(encryptedText, 'base64')
+              const decrypted = Buffer.alloc(encryptedBuffer.length)
+              for (let i = 0; i < encryptedBuffer.length; i++) {
+                decrypted[i] =
+                  encryptedBuffer[i] ^ keyBuffer[i % keyBuffer.length]
+              }
+              return decrypted.toString('utf8')
+            }
+
+            const decryptedKey = decrypt(keyDoc.encryptedKey, user.$id)
+            setUserApiKey(decryptedKey)
+            return
+          } else {
+            // No cloud key found
+            setUserApiKey(null)
+            return
+          }
+        } catch (error) {
+          console.error('Failed to load cloud API key:', error)
+          setUserApiKey(null)
+          return
+        }
+      } else {
+        // Guest mode - only check localStorage
+        const savedKey = localStorage.getItem('userOpenRouterApiKey')
+        setUserApiKey(savedKey || null)
+      }
+    }
+
+    loadApiKey()
+  }, [user])
+
   if (authLoading || chatsLoading) {
     return <div className="loading-state"></div>
   }
@@ -835,6 +896,28 @@ export default function Chat() {
           </div>
 
           <div className="auth-controls">
+            {userApiKey && user && (
+              <div
+                className="api-key-indicator"
+                title="Using your personal OpenRouter API key (synced across devices)"
+              >
+                <Key size={14} />
+                <span>Personal Key</span>
+              </div>
+            )}
+            {userApiKey && !user && (
+              <div
+                className="api-key-indicator"
+                title="Using your personal OpenRouter API key (local only)"
+                style={{
+                  borderColor: '#f59e0b',
+                  backgroundColor: '#f59e0b/20',
+                }}
+              >
+                <Key size={14} />
+                <span>Local Key</span>
+              </div>
+            )}
             {user &&
               currentChatId &&
               !currentChatId.startsWith('temp-') &&
@@ -848,7 +931,10 @@ export default function Chat() {
                 </button>
               )}
             {user ? (
-              <UserMenu />
+              <UserMenu
+                onOpenApiKeyModal={() => setShowApiKeyModal(true)}
+                userApiKey={userApiKey}
+              />
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
@@ -934,6 +1020,16 @@ export default function Chat() {
         onClose={() => setShowShareModal(false)}
         chatId={currentChatId}
         chatTitle={currentChat?.title}
+      />
+
+      <ApiKeyModal
+        isOpen={showApiKeyModal}
+        onClose={() => setShowApiKeyModal(false)}
+        user={user}
+        onSave={(apiKey, keyData, synced) => {
+          setUserApiKey(apiKey)
+          setShowApiKeyModal(false)
+        }}
       />
     </div>
   )

@@ -3,16 +3,17 @@ import { createOpenAI } from '@ai-sdk/openai'
 
 export const maxDuration = 60
 
-// Create OpenRouter provider using AI SDK
-const openrouter = createOpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-  headers: {
-    'HTTP-Referer':
-      process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000',
-    'X-Title': process.env.NEXT_PUBLIC_SITE_NAME || 'E7 Chat Assistant',
-  },
-})
+// Create OpenRouter provider factory
+const createOpenRouterProvider = (apiKey) =>
+  createOpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: apiKey,
+    headers: {
+      'HTTP-Referer':
+        process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000',
+      'X-Title': process.env.NEXT_PUBLIC_SITE_NAME || 'E7 Chat Assistant',
+    },
+  })
 
 // Curated list of valuable models with concise descriptions
 const CURATED_MODELS = {
@@ -115,15 +116,17 @@ const CURATED_MODELS = {
   },
 }
 
-function validateRequest(body) {
+function validateRequest(body, apiKey) {
   const { messages, model } = body
 
   if (!messages || !Array.isArray(messages)) {
     throw new Error('Messages array is required')
   }
 
-  if (!process.env.OPENROUTER_API_KEY) {
-    throw new Error('OpenRouter API key not configured')
+  if (!apiKey) {
+    throw new Error(
+      'OpenRouter API key not configured. Please add your own API key or ensure the server API key is set.',
+    )
   }
 
   return { messages, model: model || 'openai/gpt-4o' }
@@ -160,8 +163,16 @@ function createErrorResponse(error, status = 500) {
 export async function POST(req) {
   try {
     const body = await req.json()
-    const { messages, model } = validateRequest(body)
+
+    // Check for user's API key first
+    const userApiKey = req.headers.get('X-User-API-Key')
+    const apiKey = userApiKey || process.env.OPENROUTER_API_KEY
+
+    const { messages, model } = validateRequest(body, apiKey)
     const { settings = {} } = body
+
+    // Create provider with the appropriate API key
+    const openrouter = createOpenRouterProvider(apiKey)
 
     const result = streamText({
       model: openrouter(model),
@@ -181,9 +192,10 @@ export async function POST(req) {
 
 export async function GET() {
   try {
+    // Note: GET route still requires server API key for public model listing
     if (!process.env.OPENROUTER_API_KEY) {
       return Response.json(
-        { error: 'OpenRouter API key not configured' },
+        { error: 'Server OpenRouter API key not configured for model listing' },
         { status: 500 },
       )
     }

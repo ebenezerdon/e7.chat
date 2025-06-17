@@ -164,22 +164,22 @@
   align-items: center;
   gap: 8px;
   transition: all 0.2s;
-  color: #374151;
+  color: #f3f4f6;
 }
 
 .user-menu-button:hover {
-  background-color: #f3f4f6;
+  background-color: rgba(55, 65, 81, 0.5);
 }
 
 .user-menu-dropdown {
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: #2c313a;
+  border: 1px solid #3a404b;
   border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
+    0 4px 6px -2px rgba(0, 0, 0, 0.1);
   min-width: 160px;
   z-index: 100;
   overflow: hidden;
@@ -194,18 +194,18 @@
   text-align: left;
   cursor: pointer;
   font-size: 14px;
-  color: #374151;
+  color: #f3f4f6;
   transition: background-color 0.2s;
 }
 
 .user-menu-item:hover {
-  background-color: #f3f4f6;
+  background-color: rgba(55, 65, 81, 0.5);
 }
 
 .user-menu-item.danger {
-  color: #dc2626;
+  color: #ef4444;
 }
 
 .user-menu-item.danger:hover {
-  background-color: #fef2f2;
+  background-color: rgba(239, 68, 68, 0.1);
 }
