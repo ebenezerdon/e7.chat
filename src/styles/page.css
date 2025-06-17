@@ -200,7 +200,7 @@
 
 /* Message Container */
 .message-container {
-  @apply flex-1 overflow-y-auto pt-6 sm:pt-10 pb-[20vh] sm:pb-[25vh] px-4 sm:px-10 bg-gradient-to-b from-[#1a1e24]/30 to-[#1e2329]/30;
+  @apply flex-1 overflow-y-auto pt-6 sm:pt-10 pb-[7vh] sm:pb-[10vh] px-4 sm:px-10 bg-gradient-to-b from-[#1a1e24]/30 to-[#1e2329]/30;
 }
 
 .message-wrapper {
@@ -619,7 +619,7 @@
     -webkit-overflow-scrolling: touch;
     padding: 1rem;
     padding-top: 1rem;
-    padding-bottom: calc(20vh + 4rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(7vh + 4rem + env(safe-area-inset-bottom, 0));
     will-change: transform;
   }
 
