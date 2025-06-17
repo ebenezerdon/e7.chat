@@ -1,4 +1,10 @@
-import { databases, ID, DATABASE_ID, CHATS_COLLECTION_ID } from './appwrite'
+import {
+  databases,
+  ID,
+  DATABASE_ID,
+  CHATS_COLLECTION_ID,
+  SHARED_CHATS_COLLECTION_ID,
+} from './appwrite'
 import { Query } from 'appwrite'
 
 // Collection IDs
@@ -375,4 +381,169 @@ export const getChatMessages = async (user, chatId) => {
 export const syncToCloud = async (user) => {
   // No-op since we're already in the cloud
   console.log('Using cloud-only storage, no sync needed')
+}
+
+// Share functionality
+export const shareChat = async (user, chatId) => {
+  if (!user || !chatId) {
+    throw new Error('User and chat ID are required to share a chat')
+  }
+
+  try {
+    // Get the original chat
+    const originalChat = await getChat(user, chatId)
+    if (!originalChat) {
+      throw new Error('Chat not found')
+    }
+
+    // Generate a unique share ID
+    const shareId = ID.unique()
+
+    // Create shared chat data
+    const sharedChatData = {
+      shareId,
+      originalChatId: chatId,
+      title: originalChat.title,
+      messages: originalChat.messages,
+      sharedBy: user.name || user.email,
+      sharedAt: new Date().toISOString(),
+      isActive: true,
+    }
+
+    // Create the shared chat document (publicly readable)
+    const result = await databases.createDocument(
+      DATABASE_ID,
+      SHARED_CHATS_COLLECTION_ID,
+      ID.unique(),
+      sharedChatData,
+    )
+
+    return {
+      shareId,
+      shareUrl: `${
+        typeof window !== 'undefined' ? window.location.origin : ''
+      }/share/${shareId}`,
+      ...result,
+    }
+  } catch (error) {
+    console.error('Error sharing chat:', error)
+    throw error
+  }
+}
+
+export const getSharedChat = async (shareId) => {
+  if (!shareId) {
+    return null
+  }
+
+  try {
+    const result = await databases.listDocuments(
+      DATABASE_ID,
+      SHARED_CHATS_COLLECTION_ID,
+      [
+        Query.equal('shareId', shareId),
+        Query.equal('isActive', true),
+        Query.limit(1),
+      ],
+    )
+
+    return result.documents[0] || null
+  } catch (error) {
+    console.error('Error fetching shared chat:', error)
+    return null
+  }
+}
+
+export const unshareChat = async (user, chatId) => {
+  if (!user || !chatId) {
+    throw new Error('User and chat ID are required to unshare a chat')
+  }
+
+  try {
+    // Find the shared chat document
+    const result = await databases.listDocuments(
+      DATABASE_ID,
+      SHARED_CHATS_COLLECTION_ID,
+      [Query.equal('originalChatId', chatId), Query.equal('isActive', true)],
+    )
+
+    if (result.documents.length === 0) {
+      throw new Error('Shared chat not found')
+    }
+
+    const sharedChat = result.documents[0]
+
+    // Verify ownership by checking if the user who's trying to unshare is the same as sharedBy
+    const originalChat = await getChat(user, chatId)
+    if (!originalChat) {
+      throw new Error('Original chat not found or access denied')
+    }
+
+    // Deactivate the share
+    await databases.updateDocument(
+      DATABASE_ID,
+      SHARED_CHATS_COLLECTION_ID,
+      sharedChat.$id,
+      { isActive: false },
+    )
+
+    return true
+  } catch (error) {
+    console.error('Error unsharing chat:', error)
+    throw error
+  }
+}
+
+export const getChatShareStatus = async (user, chatId) => {
+  if (!user || !chatId) {
+    return { isShared: false }
+  }
+
+  try {
+    const result = await databases.listDocuments(
+      DATABASE_ID,
+      SHARED_CHATS_COLLECTION_ID,
+      [
+        Query.equal('originalChatId', chatId),
+        Query.equal('isActive', true),
+        Query.limit(1),
+      ],
+    )
+
+    if (result.documents.length > 0) {
+      const sharedChat = result.documents[0]
+      return {
+        isShared: true,
+        shareId: sharedChat.shareId,
+        shareUrl: `${
+          typeof window !== 'undefined' ? window.location.origin : ''
+        }/share/${sharedChat.shareId}`,
+        sharedAt: sharedChat.sharedAt,
+      }
+    }
+
+    return { isShared: false }
+  } catch (error) {
+    console.error('Error checking share status:', error)
+    return { isShared: false }
+  }
+}
+
+// Function to get shared chat messages (for public viewing)
+export const getSharedChatMessages = async (shareId) => {
+  try {
+    const sharedChat = await getSharedChat(shareId)
+    if (!sharedChat) {
+      return []
+    }
+
+    // Parse messages from JSON string and sort by creation time
+    const messages = sharedChat.messages ? JSON.parse(sharedChat.messages) : []
+    return messages.sort(
+      (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+    )
+  } catch (error) {
+    console.error('Error fetching shared chat messages:', error)
+    return []
+  }
 }
