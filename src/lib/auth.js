@@ -41,8 +41,9 @@ export const AuthProvider = ({ children }) => {
 
       await account.createOAuth2Session(
         'google',
-        `${frontendUrl}/auth/success`, // Success redirect
-        `${frontendUrl}/auth/failure`, // Failure redirect
+        'google',
+        `${frontendUrl}`, // Success redirect
+        `${frontendUrl}/failure`, // Failure redirect
       )
     } catch (error) {
       throw error
@@ -60,7 +61,7 @@ export const AuthProvider = ({ children }) => {
 
       await account.createOAuth2Session(
         'github',
-        `${frontendUrl}/auth/success`, // Success redirect
+        `${frontendUrl}`, // Success redirect
         `${frontendUrl}/auth/failure`, // Failure redirect
       )
     } catch (error) {
