@@ -1,9 +1,17 @@
-import { User, Download, Loader2, Check } from 'lucide-react'
+import { User, Download, Loader2, Check, FileText } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { useState, useEffect } from 'react'
 import ImageGenerationAnimation from './ImageGenerationAnimation'
 
-const Message = ({ role, content, isSaving, type, imageData, imagePrompt }) => {
+const Message = ({
+  role,
+  content,
+  isSaving,
+  type,
+  imageData,
+  imagePrompt,
+  experimental_attachments,
+}) => {
   const [downloadState, setDownloadState] = useState('idle') // idle, downloading, success
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [downloadText, setDownloadText] = useState('Download')
@@ -104,6 +112,51 @@ const Message = ({ role, content, isSaving, type, imageData, imagePrompt }) => {
           <div className="markdown-content">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
+
+          {/* Display attachments */}
+          {experimental_attachments && experimental_attachments.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {experimental_attachments.map((attachment, index) => (
+                <div
+                  key={index}
+                  className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                >
+                  {attachment.contentType?.startsWith('image/') ? (
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={attachment.url}
+                        alt={attachment.name || `attachment-${index}`}
+                        className="w-16 h-16 object-cover rounded border border-gray-300"
+                        loading="lazy"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">
+                          {attachment.name || `Image ${index + 1}`}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Image attachment
+                        </div>
+                      </div>
+                    </div>
+                  ) : attachment.contentType === 'application/pdf' ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <FileText size={20} className="text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">
+                          {attachment.name || `Document ${index + 1}`}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          PDF attachment
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
 
           {type === 'loading' && (
             <div className="loading-indicator">

@@ -20,6 +20,8 @@ import { useAuth } from '../lib/auth'
 import AuthModal from '@/components/AuthModal'
 import UserMenu from '@/components/UserMenu'
 import ModelSelector from '@/components/ModelSelector'
+import FileUpload from '@/components/FileUpload'
+import AttachmentCount from '@/components/AttachmentCount'
 
 export default function Chat() {
   const router = useRouter()
@@ -32,6 +34,9 @@ export default function Chat() {
   const [currentChat, setCurrentChat] = useState(null)
   const [chatsLoading, setChatsLoading] = useState(true)
   const [savingMessages, setSavingMessages] = useState(new Set())
+
+  // File attachments state
+  const [attachedFiles, setAttachedFiles] = useState(null)
 
   // LLM model selection state (simplified for OpenRouter)
   const [selectedModel, setSelectedModel] = useState('openai/gpt-4o')
@@ -49,6 +54,9 @@ export default function Chat() {
       model: selectedModel,
     },
     onFinish: (message) => {
+      // Clear attachments after message is sent
+      setAttachedFiles(null)
+
       // Save assistant message to database in the background (non-blocking)
       if (currentChatId && message.role === 'assistant' && user) {
         const messageId = message.id || Date.now()
@@ -413,10 +421,10 @@ export default function Chat() {
         return
       }
 
-      // Check if this is an image generation request
+      // Check if this is an image generation request (only if no attachments)
       const imagePrompt = detectImageRequest(input)
 
-      if (imagePrompt) {
+      if (imagePrompt && (!attachedFiles || attachedFiles.length === 0)) {
         console.log('Image request detected:', imagePrompt)
         // Clear input immediately for better UX
         setInput('')
@@ -428,15 +436,29 @@ export default function Chat() {
       const isFirstMessage =
         (await getChatMessages(user, currentChatId)).length === 0
 
-      // Optimistic update: immediately trigger AI response for text
-      handleSubmit()
+      // Prepare user message content for database storage
+      let userMessageContent = input
+      if (attachedFiles && attachedFiles.length > 0) {
+        const attachmentSummary = Array.from(attachedFiles)
+          .map(
+            (file) =>
+              `${file.type.startsWith('image/') ? '📷' : '📄'} ${file.name}`,
+          )
+          .join(', ')
+        userMessageContent += `\n\n[Attachments: ${attachmentSummary}]`
+      }
+
+      // Use handleSubmit with experimental_attachments for AI SDK
+      handleSubmit(e, {
+        experimental_attachments: attachedFiles,
+      })
 
       // Save user message to database in the background
       const userMessageId = `user-${Date.now()}`
       setSavingMessages((prev) => new Set([...prev, userMessageId]))
 
       try {
-        await saveMessage(user, currentChatId, 'user', input)
+        await saveMessage(user, currentChatId, 'user', userMessageContent)
         setSavingMessages((prev) => {
           const newSet = new Set(prev)
           newSet.delete(userMessageId)
@@ -646,10 +668,25 @@ export default function Chat() {
         />
 
         <div className="input-area">
+          {/* Attachments display above input */}
+          {attachedFiles && attachedFiles.length > 0 && (
+            <div className="flex justify-start px-4 pb-2">
+              <AttachmentCount
+                files={attachedFiles}
+                onClear={() => setAttachedFiles(null)}
+              />
+            </div>
+          )}
+
           <form onSubmit={handleChatSubmit} className="input-form">
             <ModelSelector
               selectedModel={selectedModel}
               onModelChange={setSelectedModel}
+            />
+            <FileUpload
+              files={attachedFiles}
+              onFilesChange={setAttachedFiles}
+              showAttachmentsList={false}
             />
             <input
               value={input}
