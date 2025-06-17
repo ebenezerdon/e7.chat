@@ -561,6 +561,68 @@ export default function Chat() {
     }
   }, [currentChatId, user, router, loadChats])
 
+  const handleDeleteChatFromSidebar = useCallback(
+    async (chatId) => {
+      if (!chatId || !user) return
+
+      try {
+        await deleteChat(user, chatId)
+
+        // Refresh the chats list
+        await loadChats()
+
+        // If the deleted chat was the current one, navigate to first available chat or home
+        if (chatId === currentChatId) {
+          const updatedChats = await getChatsCostOptimized(user)
+          if (updatedChats.length > 0) {
+            router.push(`/?chatId=${updatedChats[0].$id}`)
+            setCurrentChatId(updatedChats[0].$id)
+          } else {
+            router.push('/')
+            setCurrentChatId(null)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to delete chat:', error)
+        alert(
+          'Failed to delete chat. Please check your connection and try again.',
+        )
+      }
+    },
+    [user, router, loadChats, currentChatId],
+  )
+
+  const handleRenameChat = useCallback(
+    async (chatId, newTitle) => {
+      if (!chatId || !user || !newTitle.trim()) return
+
+      try {
+        await updateChatTitle(user, chatId, newTitle.trim())
+
+        // Update the chats list locally instead of reloading from server
+        setChatsData((prev) =>
+          prev.map((chat) =>
+            chat.$id === chatId ? { ...chat, title: newTitle.trim() } : chat,
+          ),
+        )
+
+        // If the renamed chat is the current one, update the current chat title
+        if (chatId === currentChatId) {
+          setCurrentChat((prev) => ({
+            ...prev,
+            title: newTitle.trim(),
+          }))
+        }
+      } catch (error) {
+        console.error('Failed to rename chat:', error)
+        alert(
+          'Failed to rename chat. Please check your connection and try again.',
+        )
+      }
+    },
+    [user, currentChatId],
+  )
+
   const handleChatSelect = (chatId) => {
     setCurrentChatId(chatId)
     router.push(`/?chatId=${chatId}`)
@@ -990,6 +1052,8 @@ export default function Chat() {
         currentChatId={currentChatId}
         setCurrentChatId={handleChatSelect}
         initializeNewChat={initializeNewChat}
+        onRenameChat={handleRenameChat}
+        onDeleteChat={handleDeleteChatFromSidebar}
       />
       <div className="chat-main">
         <div className="chat-header">

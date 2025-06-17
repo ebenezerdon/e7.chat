@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { PenLine, Menu, GitBranch } from 'lucide-react'
+import { PenLine, Menu, GitBranch, MoreHorizontal } from 'lucide-react'
+import ChatOptionsModal from './ChatOptionsModal'
 import '../styles/sidebar.css'
 
 export default function Sidebar({
@@ -10,12 +11,61 @@ export default function Sidebar({
   currentChatId,
   setCurrentChatId,
   initializeNewChat,
+  onRenameChat,
+  onDeleteChat,
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [optionsModal, setOptionsModal] = useState({
+    isOpen: false,
+    chatId: null,
+    chatTitle: '',
+    position: { top: 0, left: 0 },
+  })
 
   const openSidebar = () => setIsSidebarOpen(true)
 
   const closeSidebar = () => setIsSidebarOpen(false)
+
+  const handleOptionsClick = (e, chat) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const rect = e.target
+      .closest('.chat-options-button')
+      .getBoundingClientRect()
+    const modalPosition = {
+      top: rect.bottom + 5,
+      left: rect.left - 120, // Position modal to the left of the button
+    }
+
+    setOptionsModal({
+      isOpen: true,
+      chatId: chat.$id,
+      chatTitle: chat.title || 'New Chat',
+      position: modalPosition,
+    })
+  }
+
+  const closeOptionsModal = () => {
+    setOptionsModal({
+      isOpen: false,
+      chatId: null,
+      chatTitle: '',
+      position: { top: 0, left: 0 },
+    })
+  }
+
+  const handleRename = async (newTitle) => {
+    if (onRenameChat && optionsModal.chatId) {
+      await onRenameChat(optionsModal.chatId, newTitle)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (onDeleteChat && optionsModal.chatId) {
+      await onDeleteChat(optionsModal.chatId)
+    }
+  }
 
   return (
     <>
@@ -49,39 +99,49 @@ export default function Sidebar({
 
         <div className="chat-list">
           {fetchedChats?.map((chat) => (
-            <Link
-              key={chat.$id}
-              href={`/?chatId=${chat.$id}`}
-              onClick={() => {
-                setCurrentChatId(chat.$id)
-                closeSidebar()
-              }}
-              className={`chat-item ${
-                currentChatId === chat.$id ? 'chat-item-active' : ''
-              } ${chat.isOptimistic ? 'chat-item-creating' : ''}`}
-            >
-              <div className="chat-item-content">
-                {chat.isBranch && (
-                  <GitBranch
-                    className="branch-icon"
-                    size={14}
-                    strokeWidth={1.5}
-                  />
-                )}
-                <span
-                  className={`chat-item-text ${
-                    currentChatId === chat.$id
-                      ? 'chat-item-text-active'
-                      : 'chat-item-text-inactive'
-                  }`}
-                >
-                  {chat.title || 'New Chat'}
-                  {chat.isOptimistic && (
-                    <span className="chat-creating-indicator"> ●</span>
+            <div key={chat.$id} className="chat-item-wrapper">
+              <Link
+                href={`/?chatId=${chat.$id}`}
+                onClick={() => {
+                  setCurrentChatId(chat.$id)
+                  closeSidebar()
+                }}
+                className={`chat-item ${
+                  currentChatId === chat.$id ? 'chat-item-active' : ''
+                } ${chat.isOptimistic ? 'chat-item-creating' : ''}`}
+              >
+                <div className="chat-item-content">
+                  {chat.isBranch && (
+                    <GitBranch
+                      className="branch-icon"
+                      size={14}
+                      strokeWidth={1.5}
+                    />
                   )}
-                </span>
-              </div>
-            </Link>
+                  <span
+                    className={`chat-item-text ${
+                      currentChatId === chat.$id
+                        ? 'chat-item-text-active'
+                        : 'chat-item-text-inactive'
+                    }`}
+                  >
+                    {chat.title || 'New Chat'}
+                    {chat.isOptimistic && (
+                      <span className="chat-creating-indicator"> ●</span>
+                    )}
+                  </span>
+                </div>
+              </Link>
+              {!chat.isOptimistic && (
+                <button
+                  className="chat-options-button"
+                  onClick={(e) => handleOptionsClick(e, chat)}
+                  aria-label="Chat options"
+                >
+                  <MoreHorizontal className="options-dots" />
+                </button>
+              )}
+            </div>
           ))}
 
           {fetchedChats?.length === 0 && (
@@ -99,6 +159,15 @@ export default function Sidebar({
           </div>
         </div>
       </div>
+
+      <ChatOptionsModal
+        isOpen={optionsModal.isOpen}
+        onClose={closeOptionsModal}
+        onRename={handleRename}
+        onDelete={handleDelete}
+        chatTitle={optionsModal.chatTitle}
+        position={optionsModal.position}
+      />
     </>
   )
 }
