@@ -114,7 +114,7 @@ export default function Sidebar({
           </div>
           <button
             onClick={() => {
-              initializeNewChat()
+              initializeNewChat(true)
               closeSidebar()
             }}
             className="new-chat-button"

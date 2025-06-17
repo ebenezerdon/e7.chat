@@ -12,6 +12,7 @@ import {
   getChatsCostOptimized,
   saveUserPreference,
   getUserPreferences,
+  getChats,
 } from '../lib/db'
 import { databases, DATABASE_ID, account } from '../lib/appwrite'
 import { useRouter } from 'next/navigation'
@@ -152,90 +153,146 @@ export default function Chat() {
     }
   }, [user])
 
-  const initializeNewChat = useCallback(async () => {
-    if (!user) {
-      setShowAuthModal(true)
-      return
-    }
-
-    try {
-      // Generate temporary ID for optimistic update
-      const tempChatId = `temp-${Date.now()}`
-      const now = new Date().toISOString()
-
-      // Create optimistic chat object
-      const optimisticChat = {
-        $id: tempChatId,
-        title: 'New Chat',
-        createdAt: now,
-        updatedAt: now,
-        messageCount: 0,
-        isArchived: false,
-        isPinned: false,
-        isOptimistic: true,
+  const initializeNewChat = useCallback(
+    async (forceCreate = false) => {
+      if (!user) {
+        setShowAuthModal(true)
+        return
       }
 
-      // Immediately update UI with optimistic chat
-      setChatsData((prev) => [optimisticChat, ...prev])
-      setCurrentChatId(tempChatId)
+      try {
+        // If forceCreate is true (e.g., user explicitly clicked "New Chat"), skip reuse logic
+        if (!forceCreate) {
+          // 1) Try to find an existing unused "New Chat" first (both in current state and freshly fetched)
+          const findUnusedNewChat = (chats) =>
+            chats?.find(
+              (chat) =>
+                chat.title === 'New Chat' &&
+                (chat.messageCount === 0 || chat.messageCount === undefined),
+            )
 
-      // Navigate immediately to provide instant feedback
-      router.push(`/?chatId=${tempChatId}`)
+          // Check the local state first
+          let reusableChat = findUnusedNewChat(chatsData)
 
-      // Clear messages for new chat
-      setMessages([])
-      setCurrentChat(optimisticChat)
+          if (!reusableChat) {
+            // Fetch latest chats from server in case local state is stale
+            try {
+              const latestChats = await getChatsCostOptimized(user)
+              // Update local state with latest chats (non-blocking)
+              setChatsData(latestChats)
+              reusableChat = findUnusedNewChat(latestChats)
+            } catch (err) {
+              console.error(
+                'Failed to fetch latest chats before creating new one',
+                err,
+              )
+            }
+          }
 
-      // Now create the actual chat in the database (background operation)
-      const createChatPromise = createChat(user)
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Chat creation timeout')), 10000),
-      )
-
-      const result = await Promise.race([createChatPromise, timeoutPromise])
-
-      // Replace optimistic chat with real chat data
-      setChatsData((prev) =>
-        prev.map((chat) =>
-          chat.$id === tempChatId
-            ? {
-                $id: result.$id,
-                title: result.title,
-                createdAt: result.createdAt,
-                updatedAt: result.updatedAt,
-                messageCount: 0,
-                isArchived: false,
-                isPinned: false,
+          // Final fallback: perform a direct query to the main chats collection
+          if (!reusableChat) {
+            try {
+              const fullChats = await getChats(user)
+              reusableChat = findUnusedNewChat(fullChats)
+              if (reusableChat) {
+                // Merge fullChats into local state to keep UI up-to-date
+                setChatsData(fullChats)
               }
-            : chat,
-        ),
-      )
+            } catch (err) {
+              console.error('Failed full chat fetch fallback', err)
+            }
+          }
 
-      // Update current chat ID to real ID
-      setCurrentChatId(result.$id)
-      setCurrentChat(result)
+          // If we found an unused chat, just navigate to it instead of creating a new one
+          if (reusableChat) {
+            setCurrentChatId(reusableChat.$id)
+            router.push(`/?chatId=${reusableChat.$id}`)
+            setCurrentChat(reusableChat)
+            setMessages([])
+            return
+          }
+        }
 
-      // Update URL with real chat ID
-      router.replace(`/?chatId=${result.$id}`)
-    } catch (error) {
-      console.error('Failed to create chat:', error)
+        // --- Original optimistic creation flow starts here ---
+        // Generate temporary ID for optimistic update
+        const tempChatId = `temp-${Date.now()}`
+        const now = new Date().toISOString()
 
-      // Rollback optimistic update on error
-      setChatsData((prev) => prev.filter((chat) => !chat.isOptimistic))
+        // Create optimistic chat object
+        const optimisticChat = {
+          $id: tempChatId,
+          title: 'New Chat',
+          createdAt: now,
+          updatedAt: now,
+          messageCount: 0,
+          isArchived: false,
+          isPinned: false,
+          isOptimistic: true,
+        }
 
-      // Navigate back to first available chat or home
-      const existingChats = chatsData.filter((chat) => !chat.isOptimistic)
-      if (existingChats.length > 0) {
-        setCurrentChatId(existingChats[0].$id)
-        router.push(`/?chatId=${existingChats[0].$id}`)
-      } else {
-        setCurrentChatId(null)
-        router.push('/')
+        // Immediately update UI with optimistic chat
+        setChatsData((prev) => [optimisticChat, ...prev])
+        setCurrentChatId(tempChatId)
+
+        // Navigate immediately to provide instant feedback
+        router.push(`/?chatId=${tempChatId}`)
+
+        // Clear messages for new chat
+        setMessages([])
+        setCurrentChat(optimisticChat)
+
+        // Now create the actual chat in the database (background operation)
+        const createChatPromise = createChat(user)
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Chat creation timeout')), 10000),
+        )
+
+        const result = await Promise.race([createChatPromise, timeoutPromise])
+
+        // Replace optimistic chat with real chat data
+        setChatsData((prev) =>
+          prev.map((chat) =>
+            chat.$id === tempChatId
+              ? {
+                  $id: result.$id,
+                  title: result.title,
+                  createdAt: result.createdAt,
+                  updatedAt: result.updatedAt,
+                  messageCount: 0,
+                  isArchived: false,
+                  isPinned: false,
+                }
+              : chat,
+          ),
+        )
+
+        // Update current chat ID to real ID
+        setCurrentChatId(result.$id)
+        setCurrentChat(result)
+
+        // Update URL with real chat ID
+        router.replace(`/?chatId=${result.$id}`)
+      } catch (error) {
+        console.error('Failed to create chat:', error)
+
+        // Rollback optimistic update on error
+        setChatsData((prev) => prev.filter((chat) => !chat.isOptimistic))
+
+        // Navigate back to first available chat or home
+        const existingChats = chatsData.filter((chat) => !chat.isOptimistic)
+        if (existingChats.length > 0) {
+          setCurrentChatId(existingChats[0].$id)
+          router.push(`/?chatId=${existingChats[0].$id}`)
+        } else {
+          setCurrentChatId(null)
+          router.push('/')
+        }
+
+        alert('Failed to create new chat. Please try again.')
       }
-
-      alert('Failed to create new chat. Please try again.')
-    }
-  }, [user, router, chatsData, setMessages])
+    },
+    [user, router, chatsData, setMessages, getChatsCostOptimized],
+  )
 
   const generateTitle = async (message) => {
     try {
@@ -923,9 +980,22 @@ export default function Chat() {
         }
       }
     } else if (!chatId && chatsData.length > 0) {
-      // No chat specified, go to first available
-      router.push(`/?chatId=${chatsData[0].$id}`)
-      setCurrentChatId(chatsData[0].$id)
+      // No chat specified - check if most recent chat is an unused "New Chat"
+      const mostRecentChat = chatsData[0] // chats are sorted by createdAt desc
+      const isUnusedNewChat =
+        mostRecentChat.title === 'New Chat' &&
+        (mostRecentChat.messageCount === 0 ||
+          mostRecentChat.messageCount === undefined)
+
+      if (isUnusedNewChat) {
+        // Reuse the existing unused "New Chat"
+        router.push(`/?chatId=${mostRecentChat.$id}`)
+        setCurrentChatId(mostRecentChat.$id)
+      } else {
+        // Go to first available chat (most recent)
+        router.push(`/?chatId=${chatsData[0].$id}`)
+        setCurrentChatId(chatsData[0].$id)
+      }
     } else if (!chatId && chatsData.length === 0 && !chatsLoading) {
       // No chats exist, create a new one
       initializeNewChat()
