@@ -12,7 +12,7 @@ import {
   getChatsCostOptimized,
 } from '../lib/db'
 import { useRouter } from 'next/navigation'
-import { SendHorizontal, MinusCircle, LogIn } from 'lucide-react'
+import { SendHorizontal, MinusCircle, LogIn, Share2 } from 'lucide-react'
 import ChatThread from '@/components/ChatThread'
 import '../styles/page.css'
 import Sidebar from '@/components/Sidebar'
@@ -22,6 +22,7 @@ import UserMenu from '@/components/UserMenu'
 import ModelSelector from '@/components/ModelSelector'
 import FileUpload from '@/components/FileUpload'
 import AttachmentCount from '@/components/AttachmentCount'
+import ShareModal from '@/components/ShareModal'
 
 export default function Chat() {
   const router = useRouter()
@@ -30,6 +31,7 @@ export default function Chat() {
 
   const [currentChatId, setCurrentChatId] = useState(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
   const [chatsData, setChatsData] = useState([])
   const [currentChat, setCurrentChat] = useState(null)
   const [chatsLoading, setChatsLoading] = useState(true)
@@ -820,14 +822,28 @@ export default function Chat() {
                 <span className="creating-indicator"> (Creating...)</span>
               )}
             </h1>
-            <button
-              onClick={handleDeleteChat}
-              className="delete-button"
-              disabled={currentChatId?.startsWith('temp-')}
-              aria-label="Delete chat"
-            >
-              <MinusCircle className="delete-icon" strokeWidth={1.5} />
-            </button>
+            <div className="header-actions">
+              {user &&
+                currentChatId &&
+                !currentChatId.startsWith('temp-') &&
+                messages.length > 0 && (
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="share-button"
+                    aria-label="Share chat"
+                  >
+                    <Share2 className="share-icon" strokeWidth={1.5} />
+                  </button>
+                )}
+              <button
+                onClick={handleDeleteChat}
+                className="delete-button"
+                disabled={currentChatId?.startsWith('temp-')}
+                aria-label="Delete chat"
+              >
+                <MinusCircle className="delete-icon" strokeWidth={1.5} />
+              </button>
+            </div>
           </div>
 
           <div className="auth-controls">
@@ -911,6 +927,13 @@ export default function Chat() {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+      />
+
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        chatId={currentChatId}
+        chatTitle={currentChat?.title}
       />
     </div>
   )
