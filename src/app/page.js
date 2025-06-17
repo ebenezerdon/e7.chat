@@ -26,7 +26,7 @@ import AttachmentCount from '@/components/AttachmentCount'
 export default function Chat() {
   const router = useRouter()
   const chatThreadRef = useRef(null)
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
 
   const [currentChatId, setCurrentChatId] = useState(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -713,7 +713,7 @@ export default function Chat() {
 
   // Handle initial chat selection from URL
   useEffect(() => {
-    if (!user) return
+    if (authLoading || !user) return
 
     const chatId = new URLSearchParams(window.location.search).get('chatId')
 
@@ -739,7 +739,7 @@ export default function Chat() {
       // No chats exist, create a new one
       initializeNewChat()
     }
-  }, [user, chatsData, chatsLoading, router, initializeNewChat])
+  }, [authLoading, user, chatsData, chatsLoading, router, initializeNewChat])
 
   // Load messages when currentChatId changes
   useEffect(() => {
@@ -799,8 +799,8 @@ export default function Chat() {
     }
   }, [messages, currentChatId])
 
-  if (chatsLoading) {
-    return <div className="loading-state">Loading...</div>
+  if (authLoading || chatsLoading) {
+    return <div className="loading-state"></div>
   }
 
   return (
