@@ -1,283 +1,207 @@
+import { streamText } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
-import { createAnthropic } from '@ai-sdk/anthropic'
-import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { streamText, smoothStream } from 'ai'
 
 export const maxDuration = 60
 
-// Available LLM providers and their models
-const LLM_PROVIDERS = {
+// Create OpenRouter provider using AI SDK
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
+  headers: {
+    'HTTP-Referer':
+      process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000',
+    'X-Title': process.env.NEXT_PUBLIC_SITE_NAME || 'E7 Chat Assistant',
+  },
+})
+
+// Curated list of valuable models with concise descriptions
+const CURATED_MODELS = {
+  // OpenAI Models - Most popular and reliable
   openai: {
     name: 'OpenAI',
-    createClient: () =>
-      createOpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      }),
     models: {
-      'gpt-4o': {
+      'openai/gpt-4o': {
         name: 'GPT-4o',
-        description: 'Multimodal flagship model',
+        description: 'Most capable model',
+        pricing: '$5/M tokens',
+        featured: true,
       },
-      'gpt-4o-mini': {
+      'openai/gpt-4o-mini': {
         name: 'GPT-4o Mini',
-        description: 'Efficient cost-optimized model',
+        description: 'Fast & affordable',
+        pricing: '$0.15/M tokens',
+        featured: true,
       },
-      o1: {
-        name: 'o1',
-        description: 'Chain-of-thought reasoning model',
+      'openai/o1-preview': {
+        name: 'o1 Preview',
+        description: 'Advanced reasoning',
+        pricing: '$15/M tokens',
       },
-      'o1-mini': {
+      'openai/o1-mini': {
         name: 'o1 Mini',
-        description: 'Compact reasoning model',
+        description: 'Reasoning on a budget',
+        pricing: '$3/M tokens',
       },
     },
   },
+
+  // Anthropic Models - Great for analysis and writing
   anthropic: {
     name: 'Anthropic',
-    createClient: () =>
-      createAnthropic({
-        apiKey: process.env.ANTHROPIC_API_KEY,
-      }),
     models: {
-      'claude-3-5-sonnet-20241022': {
+      'anthropic/claude-3.5-sonnet': {
         name: 'Claude 3.5 Sonnet',
-        description: 'High-performance general model',
+        description: 'Best for coding & analysis',
+        pricing: '$3/M tokens',
+        featured: true,
       },
-      'claude-3-5-haiku-20241022': {
+      'anthropic/claude-3.5-haiku': {
         name: 'Claude 3.5 Haiku',
-        description: 'Speed-optimized model',
+        description: 'Fastest Claude model',
+        pricing: '$1/M tokens',
       },
-      'claude-3-opus-20240229': {
+      'anthropic/claude-3-opus': {
         name: 'Claude 3 Opus',
-        description: 'Large context flagship model',
-      },
-      'claude-3-sonnet-20240229': {
-        name: 'Claude 3 Sonnet',
-        description: 'Balanced performance model',
-      },
-      'claude-3-haiku-20240307': {
-        name: 'Claude 3 Haiku',
-        description: 'Lightweight efficient model',
+        description: 'Most intelligent Claude',
+        pricing: '$15/M tokens',
       },
     },
   },
+
+  // Google Models - Great for specific tasks
   google: {
     name: 'Google',
-    createClient: () =>
-      createGoogleGenerativeAI({
-        apiKey: process.env.GOOGLE_API_KEY,
-      }),
     models: {
-      'gemini-2.5-flash-preview-05-20': {
-        name: 'Gemini 2.5 Flash Preview',
-        description: 'Hybrid reasoning with thinking budgets',
+      'google/gemini-pro-1.5': {
+        name: 'Gemini 1.5 Pro',
+        description: 'Large context window',
+        pricing: '$2.50/M tokens',
       },
-      'gemini-2.0-flash': {
-        name: 'Gemini 2.0 Flash',
-        description: 'Multimodal with 1M token context',
-      },
-      'gemini-1.5-flash': {
+      'google/gemini-flash-1.5': {
         name: 'Gemini 1.5 Flash',
-        description: 'High-volume task optimization',
+        description: 'Speed optimized',
+        pricing: '$0.15/M tokens',
+        featured: true,
       },
     },
   },
-  deepseek: {
-    name: 'DeepSeek',
-    createClient: () =>
-      createOpenAI({
-        apiKey: process.env.DEEPSEEK_API_KEY,
-        baseURL: 'https://api.deepseek.com/v1',
-      }),
+
+  // Alternative Models - Good value options
+  alternatives: {
+    name: 'Alternatives',
     models: {
-      'deepseek-chat': {
-        name: 'DeepSeek V3-0324',
-        description: 'General-purpose chat model',
+      'meta-llama/llama-3.1-405b-instruct': {
+        name: 'Llama 3.1 405B',
+        description: 'Open source flagship',
+        pricing: '$2.70/M tokens',
       },
-      'deepseek-reasoner': {
-        name: 'DeepSeek R1-0528',
-        description: 'Step-by-step reasoning model',
+      'deepseek/deepseek-chat': {
+        name: 'DeepSeek Chat',
+        description: 'Great value coding',
+        pricing: '$0.14/M tokens',
+        featured: true,
+      },
+      'qwen/qwen-2.5-72b-instruct': {
+        name: 'Qwen 2.5 72B',
+        description: 'Multilingual excellence',
+        pricing: '$0.40/M tokens',
+      },
+      'mistralai/mistral-large': {
+        name: 'Mistral Large',
+        description: 'European AI leader',
+        pricing: '$2/M tokens',
       },
     },
   },
 }
 
-// Default model configurations
-const DEFAULT_MODELS = {
-  openai: 'gpt-4o',
-  anthropic: 'claude-3-5-sonnet-20241022',
-  google: 'gemini-2.0-flash',
-  deepseek: 'deepseek-chat',
+function validateRequest(body) {
+  const { messages, model } = body
+
+  if (!messages || !Array.isArray(messages)) {
+    throw new Error('Messages array is required')
+  }
+
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new Error('OpenRouter API key not configured')
+  }
+
+  return { messages, model: model || 'openai/gpt-4o' }
 }
 
-function getModelClient(provider, model) {
-  const providerConfig = LLM_PROVIDERS[provider]
-  if (!providerConfig) {
-    throw new Error(`Unsupported provider: ${provider}`)
+function createErrorResponse(error, status = 500) {
+  const errorMap = {
+    'API key': {
+      message: 'Invalid or missing OpenRouter API key',
+      status: 401,
+    },
+    'rate limit': {
+      message: 'Rate limit exceeded. Please try again later',
+      status: 429,
+    },
+    quota: {
+      message: 'Rate limit exceeded. Please try again later',
+      status: 429,
+    },
   }
 
-  const client = providerConfig.createClient()
-  const modelId = model || DEFAULT_MODELS[provider]
-
-  if (!providerConfig.models[modelId]) {
-    throw new Error(`Unsupported model ${modelId} for provider ${provider}`)
+  for (const [key, config] of Object.entries(errorMap)) {
+    if (error.message?.toLowerCase().includes(key)) {
+      return Response.json({ error: config.message }, { status: config.status })
+    }
   }
 
-  return client(modelId)
-}
-
-function getSystemPrompt(provider) {
-  const basePrompt =
-    'You are a helpful, harmless, and honest AI assistant named Lexi.'
-
-  switch (provider) {
-    case 'anthropic':
-      return `${basePrompt} You are Claude, created by Anthropic. Be helpful, harmless, and honest in your responses.`
-    case 'google':
-      return `${basePrompt} You are Gemini, created by Google. Provide accurate and helpful information.`
-    case 'deepseek':
-      return `${basePrompt} You are powered by DeepSeek's technology. You excel at reasoning and coding tasks.`
-    case 'openai':
-    default:
-      return `${basePrompt} You are powered by OpenAI's technology.`
-  }
+  return Response.json(
+    { error: error.message || 'Internal server error' },
+    { status },
+  )
 }
 
 export async function POST(req) {
   try {
-    const {
+    const body = await req.json()
+    const { messages, model } = validateRequest(body)
+    const { settings = {} } = body
+
+    const result = streamText({
+      model: openrouter(model),
+      system: 'You are a helpful AI assistant named Lexi.',
       messages,
-      provider = 'openai',
-      model,
-      settings = {},
-    } = await req.json()
-
-    if (!messages || !Array.isArray(messages)) {
-      return Response.json(
-        { error: 'Messages array is required' },
-        { status: 400 },
-      )
-    }
-
-    // Validate provider
-    if (!LLM_PROVIDERS[provider]) {
-      return Response.json(
-        {
-          error: `Unsupported provider: ${provider}. Available providers: ${Object.keys(
-            LLM_PROVIDERS,
-          ).join(', ')}`,
-        },
-        { status: 400 },
-      )
-    }
-
-    // Check if provider API key is available
-    const requiredEnvKeys = {
-      openai: 'OPENAI_API_KEY',
-      anthropic: 'ANTHROPIC_API_KEY',
-      google: 'GOOGLE_API_KEY',
-      deepseek: 'DEEPSEEK_API_KEY',
-    }
-
-    const requiredKey = requiredEnvKeys[provider]
-    if (!process.env[requiredKey]) {
-      return Response.json(
-        {
-          error: `${LLM_PROVIDERS[provider].name} API key not configured. Please set ${requiredKey} environment variable.`,
-        },
-        { status: 500 },
-      )
-    }
-
-    // Get the appropriate model client
-    const modelClient = getModelClient(provider, model)
-
-    // Configure stream options based on provider
-    const streamOptions = {
-      model: modelClient,
-      system: getSystemPrompt(provider),
-      messages,
-      experimental_transform: smoothStream(),
-      // Apply custom settings
       temperature: settings.temperature || 0.7,
       maxTokens: settings.maxTokens || 4000,
       topP: settings.topP || 0.9,
-    }
-
-    // Remove undefined values to avoid API errors
-    Object.keys(streamOptions).forEach(
-      (key) => streamOptions[key] === undefined && delete streamOptions[key],
-    )
-
-    const result = streamText(streamOptions)
+    })
 
     return result.toDataStreamResponse()
   } catch (error) {
     console.error('Chat API error:', error)
-
-    // Handle specific API errors
-    if (error.message?.includes('API key')) {
-      return Response.json(
-        {
-          error: 'Invalid or missing API key. Please check your configuration.',
-        },
-        { status: 401 },
-      )
-    }
-
-    if (
-      error.message?.includes('rate limit') ||
-      error.message?.includes('quota')
-    ) {
-      return Response.json(
-        {
-          error: 'Rate limit exceeded. Please try again later.',
-        },
-        { status: 429 },
-      )
-    }
-
-    return Response.json(
-      {
-        error: error.message || 'Internal server error',
-      },
-      { status: 500 },
-    )
+    return createErrorResponse(error)
   }
 }
 
-// GET endpoint to retrieve available models and providers
 export async function GET() {
   try {
-    const availableProviders = {}
-
-    // Check which providers have API keys configured
-    for (const [key, config] of Object.entries(LLM_PROVIDERS)) {
-      const envKey = {
-        openai: 'OPENAI_API_KEY',
-        anthropic: 'ANTHROPIC_API_KEY',
-        google: 'GOOGLE_API_KEY',
-        deepseek: 'DEEPSEEK_API_KEY',
-      }[key]
-
-      if (process.env[envKey]) {
-        availableProviders[key] = {
-          name: config.name,
-          models: config.models,
-          defaultModel: DEFAULT_MODELS[key],
-        }
-      }
+    if (!process.env.OPENROUTER_API_KEY) {
+      return Response.json(
+        { error: 'OpenRouter API key not configured' },
+        { status: 500 },
+      )
     }
 
     return Response.json({
-      providers: availableProviders,
+      providers: CURATED_MODELS,
       defaultProvider: 'openai',
+      defaultModel: 'openai/gpt-4o',
+      featured: [
+        'openai/gpt-4o',
+        'openai/gpt-4o-mini',
+        'anthropic/claude-3.5-sonnet',
+        'google/gemini-flash-1.5',
+        'deepseek/deepseek-chat',
+      ],
     })
   } catch (error) {
     console.error('Error fetching providers:', error)
-    return Response.json(
-      { error: 'Failed to fetch available providers' },
-      { status: 500 },
-    )
+    return createErrorResponse(error)
   }
 }

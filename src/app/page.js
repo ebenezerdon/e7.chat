@@ -33,9 +33,8 @@ export default function Chat() {
   const [chatsLoading, setChatsLoading] = useState(true)
   const [savingMessages, setSavingMessages] = useState(new Set())
 
-  // LLM provider and model selection state
-  const [selectedProvider, setSelectedProvider] = useState('openai')
-  const [selectedModel, setSelectedModel] = useState('')
+  // LLM model selection state (simplified for OpenRouter)
+  const [selectedModel, setSelectedModel] = useState('openai/gpt-4o')
 
   const {
     messages,
@@ -47,7 +46,6 @@ export default function Chat() {
     status,
   } = useChat({
     body: {
-      provider: selectedProvider,
       model: selectedModel,
     },
     onFinish: (message) => {
@@ -650,9 +648,7 @@ export default function Chat() {
         <div className="input-area">
           <form onSubmit={handleChatSubmit} className="input-form">
             <ModelSelector
-              selectedProvider={selectedProvider}
               selectedModel={selectedModel}
-              onProviderChange={setSelectedProvider}
               onModelChange={setSelectedModel}
             />
             <input

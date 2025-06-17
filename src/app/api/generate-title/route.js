@@ -1,33 +1,43 @@
-import { createOpenAI } from '@ai-sdk/openai'
-import { generateText } from 'ai'
 import { NextResponse } from 'next/server'
+import OpenAI from 'openai'
 
-export const runtime = 'edge'
-
-// GitHub Models configuration (commented out)
-// const openai = createOpenAI({
-//   baseURL: 'https://models.inference.ai.azure.com',
-//   apiKey: process.env.GITHUB_TOKEN,
-// })
-
-// Direct OpenAI configuration
-const openai = createOpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+// OpenRouter client configuration
+const openrouter = new OpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
+  defaultHeaders: {
+    'HTTP-Referer':
+      process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000',
+    'X-Title': process.env.NEXT_PUBLIC_SITE_NAME || 'E7 Chat Assistant',
+  },
 })
 
 export async function POST(req) {
   try {
     const { message } = await req.json()
-    const { text } = await generateText({
-      model: openai('gpt-4o'),
-      system:
-        'You are a helpful assistant that generates concise titles for conversations.',
-      prompt: `Use this first message from a conversation to generate concise title
-        without any quotes (max 5 words): "${message}"`,
+
+    const response = await openrouter.chat.completions.create({
+      model: 'openai/gpt-4o-mini', // Use a cost-effective model for title generation
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a helpful assistant that generates concise titles for conversations.',
+        },
+        {
+          role: 'user',
+          content: `Use this first message from a conversation to generate concise title without any quotes (max 5 words): "${message}"`,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 20,
     })
 
-    return NextResponse.json({ title: text })
+    const title = response.choices[0]?.message?.content || 'New Chat'
+
+    return NextResponse.json({ title })
   } catch (error) {
+    console.error('Title generation error:', error)
     return NextResponse.json(
       { error: 'Failed to generate title' },
       { status: 500 },

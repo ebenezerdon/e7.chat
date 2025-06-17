@@ -1,24 +1,41 @@
-import { createOpenAI } from '@ai-sdk/openai'
-import { generateText } from 'ai'
 import { NextResponse } from 'next/server'
+import OpenAI from 'openai'
 
-export const runtime = 'edge'
-
-const openai = createOpenAI({
-  baseURL: 'https://models.inference.ai.azure.com',
-  apiKey: process.env.GITHUB_TOKEN,
+// OpenRouter client configuration
+const openrouter = new OpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
+  defaultHeaders: {
+    'HTTP-Referer':
+      process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000',
+    'X-Title': process.env.NEXT_PUBLIC_SITE_NAME || 'E7 Chat Assistant',
+  },
 })
 
 export async function GET() {
   try {
-    const { text } = await generateText({
-      model: openai('gpt-4o'),
-      system: 'You are a helpful AI assistant named "Ella".',
-      prompt: 'Give a brief 2-sentence introduction of yourself',
+    const response = await openrouter.chat.completions.create({
+      model: 'openai/gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful AI assistant named "Lexi".',
+        },
+        {
+          role: 'user',
+          content: 'Give a brief 2-sentence introduction of yourself',
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 100,
     })
 
+    const message =
+      response.choices[0]?.message?.content ||
+      'Hello! I am Lexi, your AI assistant.'
+
     return NextResponse.json({
-      message: text,
+      message,
     })
   } catch (error) {
     console.error('Error in test route:', error)
