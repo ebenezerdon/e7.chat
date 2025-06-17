@@ -2,6 +2,7 @@ import { User, Download, Loader2, Check, FileText } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { useState, useEffect } from 'react'
 import ImageGenerationAnimation from './ImageGenerationAnimation'
+import CodeBlock from './CodeBlock'
 
 const Message = ({
   role,
@@ -110,7 +111,128 @@ const Message = ({
           }`}
         >
           <div className="markdown-content">
-            <ReactMarkdown>{content}</ReactMarkdown>
+            <ReactMarkdown
+              components={{
+                // Headings
+                h1: ({ children }) => (
+                  <h1 className="text-2xl font-bold text-gray-100 mt-6 mb-4 border-b border-gray-700 pb-2">
+                    {children}
+                  </h1>
+                ),
+                h2: ({ children }) => (
+                  <h2 className="text-xl font-semibold text-gray-100 mt-5 mb-3">
+                    {children}
+                  </h2>
+                ),
+                h3: ({ children }) => (
+                  <h3 className="text-lg font-semibold text-gray-200 mt-4 mb-2">
+                    {children}
+                  </h3>
+                ),
+                h4: ({ children }) => (
+                  <h4 className="text-base font-semibold text-gray-200 mt-3 mb-2">
+                    {children}
+                  </h4>
+                ),
+                h5: ({ children }) => (
+                  <h5 className="text-sm font-semibold text-gray-300 mt-3 mb-2">
+                    {children}
+                  </h5>
+                ),
+                h6: ({ children }) => (
+                  <h6 className="text-sm font-medium text-gray-300 mt-2 mb-1">
+                    {children}
+                  </h6>
+                ),
+
+                // Paragraphs
+                p: ({ children }) => (
+                  <p className="text-gray-200 mb-4 leading-relaxed">
+                    {children}
+                  </p>
+                ),
+
+                // Lists
+                ul: ({ children }) => (
+                  <ul className="list-disc list-outside text-gray-200 mb-4 space-y-2 pl-6">
+                    {children}
+                  </ul>
+                ),
+                ol: ({ children }) => (
+                  <ol className="list-decimal list-outside text-gray-200 mb-4 space-y-2 pl-6">
+                    {children}
+                  </ol>
+                ),
+                li: ({ children }) => (
+                  <li className="text-gray-200 leading-relaxed pl-2">
+                    {children}
+                  </li>
+                ),
+
+                // Links
+                a: ({ href, children }) => (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 underline decoration-blue-400/50 hover:decoration-blue-300/70 transition-colors"
+                  >
+                    {children}
+                  </a>
+                ),
+
+                // Emphasis
+                strong: ({ children }) => (
+                  <strong className="font-semibold text-gray-100">
+                    {children}
+                  </strong>
+                ),
+                em: ({ children }) => (
+                  <em className="italic text-gray-200">{children}</em>
+                ),
+
+                // Blockquotes
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-4 border-blue-500/50 pl-4 my-4 text-gray-300 italic bg-gray-800/30 py-2 rounded-r">
+                    {children}
+                  </blockquote>
+                ),
+
+                // Horizontal rule
+                hr: () => <hr className="border-gray-700 my-6" />,
+
+                // Code
+                code: ({ node, inline, className, children, ...props }) => {
+                  // Check if this should be treated as inline code
+                  const codeContent = String(children).trim()
+
+                  // If it's marked as inline OR it's short and has no language class, treat as inline
+                  if (
+                    inline ||
+                    (!className &&
+                      codeContent.length <= 20 &&
+                      !codeContent.includes('\n'))
+                  ) {
+                    return (
+                      <code
+                        className="bg-gray-800/70 text-blue-200 px-2 py-1 rounded-md text-sm font-mono border border-gray-700/50"
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    )
+                  }
+
+                  return (
+                    <CodeBlock className={className} {...props}>
+                      {String(children).replace(/\n$/, '')}
+                    </CodeBlock>
+                  )
+                },
+              }}
+            >
+              {content}
+            </ReactMarkdown>
           </div>
 
           {/* Display attachments */}
