@@ -566,3 +566,39 @@ export const getSharedChatMessages = async (shareId) => {
     return []
   }
 }
+
+// User preferences operations using Appwrite's built-in Account API
+export const saveUserPreference = async (account, key, value) => {
+  if (!account) {
+    throw new Error('Authentication required to save preferences')
+  }
+
+  try {
+    // Get current preferences
+    const currentPrefs = await account.getPrefs()
+
+    // Update with new preference
+    const updatedPrefs = {
+      ...currentPrefs,
+      [key]: value,
+    }
+
+    // Save updated preferences
+    await account.updatePrefs(updatedPrefs)
+  } catch (error) {
+    console.error('Error saving user preference:', error)
+    throw error
+  }
+}
+
+export const getUserPreferences = async (account) => {
+  if (!account) return {}
+
+  try {
+    const preferences = await account.getPrefs()
+    return preferences
+  } catch (error) {
+    console.error('Error fetching user preferences:', error)
+    return {}
+  }
+}

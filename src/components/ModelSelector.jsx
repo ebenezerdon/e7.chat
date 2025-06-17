@@ -3,7 +3,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { ChevronDown, Star } from 'lucide-react'
 
-const ModelSelector = ({ selectedModel = 'openai/gpt-4o', onModelChange }) => {
+const ModelSelector = ({
+  selectedModel = 'openai/gpt-4o-mini',
+  onModelChange,
+  hasApiKey = false,
+  onApiKeyRequired,
+}) => {
   const [providers, setProviders] = useState({})
   const [featuredModels, setFeaturedModels] = useState([])
   const [loading, setLoading] = useState(true)
@@ -110,6 +115,20 @@ const ModelSelector = ({ selectedModel = 'openai/gpt-4o', onModelChange }) => {
     return featured
   }
 
+  // Handle model selection with API key check
+  const handleModelSelect = (modelId) => {
+    // Allow gpt-4o-mini without API key, require API key for all other models
+    if (!hasApiKey && modelId !== 'openai/gpt-4o-mini') {
+      if (onApiKeyRequired) {
+        onApiKeyRequired()
+      }
+      return
+    }
+
+    onModelChange(modelId)
+    setShowModels(false)
+  }
+
   const currentModelInfo = getCurrentModelInfo()
   const featured = getFeaturedModels()
 
@@ -159,12 +178,20 @@ const ModelSelector = ({ selectedModel = 'openai/gpt-4o', onModelChange }) => {
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    onModelChange(model.id)
-                    setShowModels(false)
+                    handleModelSelect(model.id)
                   }}
                   className={`model-item featured ${
                     selectedModel === model.id ? 'active' : ''
+                  } ${
+                    !hasApiKey && model.id !== 'openai/gpt-4o-mini'
+                      ? 'requires-api-key'
+                      : ''
                   }`}
+                  title={
+                    !hasApiKey && model.id !== 'openai/gpt-4o-mini'
+                      ? 'Requires API key - Click to add your OpenRouter API key'
+                      : `${model.name} - ${model.pricing}`
+                  }
                 >
                   <div className="model-info">
                     <div className="model-header">
@@ -194,12 +221,20 @@ const ModelSelector = ({ selectedModel = 'openai/gpt-4o', onModelChange }) => {
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      onModelChange(modelId)
-                      setShowModels(false)
+                      handleModelSelect(modelId)
                     }}
                     className={`model-item ${
                       selectedModel === modelId ? 'active' : ''
-                    } ${model.featured ? 'has-featured' : ''}`}
+                    } ${model.featured ? 'has-featured' : ''} ${
+                      !hasApiKey && modelId !== 'openai/gpt-4o-mini'
+                        ? 'requires-api-key'
+                        : ''
+                    }`}
+                    title={
+                      !hasApiKey && modelId !== 'openai/gpt-4o-mini'
+                        ? 'Requires API key - Click to add your OpenRouter API key'
+                        : `${model.name} - ${model.pricing}`
+                    }
                   >
                     <div className="model-info">
                       <div className="model-header">

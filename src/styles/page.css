@@ -721,6 +721,20 @@
   @apply text-xs text-green-400 font-medium flex-shrink-0;
 }
 
+/* Restricted model styles */
+.model-item.requires-api-key {
+  @apply opacity-60 cursor-pointer;
+}
+
+.model-item.requires-api-key:hover {
+  @apply opacity-80 bg-amber-600/10;
+}
+
+.model-item.requires-api-key .model-title::after {
+  content: ' 🔒';
+  @apply text-amber-400 text-xs;
+}
+
 /* Scrollbar styling for the dropdown */
 .model-dropdown::-webkit-scrollbar {
   @apply w-1;
