@@ -34,6 +34,7 @@ import FileUpload from '@/components/FileUpload'
 import AttachmentCount from '@/components/AttachmentCount'
 import ShareModal from '@/components/ShareModal'
 import ApiKeyModal from '@/components/ApiKeyModal'
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 export default function Chat() {
   const router = useRouter()
@@ -44,6 +45,7 @@ export default function Chat() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [showApiKeyModal, setShowApiKeyModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [chatsData, setChatsData] = useState([])
   const [currentChat, setCurrentChat] = useState(null)
   const [chatsLoading, setChatsLoading] = useState(true)
@@ -533,31 +535,34 @@ export default function Chat() {
     }
   }
 
-  const handleDeleteChat = useCallback(async () => {
+  const handleDeleteChat = useCallback(() => {
+    if (!currentChatId || !user) return
+    setShowDeleteConfirm(true)
+  }, [currentChatId, user])
+
+  const handleConfirmDelete = useCallback(async () => {
     if (!currentChatId || !user) return
 
-    if (window.confirm('Are you sure you want to delete this chat?')) {
-      try {
-        await deleteChat(user, currentChatId)
+    try {
+      await deleteChat(user, currentChatId)
 
-        // Refresh the chats list
-        await loadChats()
+      // Refresh the chats list
+      await loadChats()
 
-        // Navigate to first available chat or home
-        const updatedChats = await getChatsCostOptimized(user)
-        if (updatedChats.length > 0) {
-          router.push(`/?chatId=${updatedChats[0].$id}`)
-          setCurrentChatId(updatedChats[0].$id)
-        } else {
-          router.push('/')
-          setCurrentChatId(null)
-        }
-      } catch (error) {
-        console.error('Failed to delete chat:', error)
-        alert(
-          'Failed to delete chat. Please check your connection and try again.',
-        )
+      // Navigate to first available chat or home
+      const updatedChats = await getChatsCostOptimized(user)
+      if (updatedChats.length > 0) {
+        router.push(`/?chatId=${updatedChats[0].$id}`)
+        setCurrentChatId(updatedChats[0].$id)
+      } else {
+        router.push('/')
+        setCurrentChatId(null)
       }
+    } catch (error) {
+      console.error('Failed to delete chat:', error)
+      alert(
+        'Failed to delete chat. Please check your connection and try again.',
+      )
     }
   }, [currentChatId, user, router, loadChats])
 
@@ -1256,6 +1261,17 @@ export default function Chat() {
           setUserApiKey(apiKey)
           setShowApiKeyModal(false)
         }}
+      />
+
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Chat"
+        message="Are you sure you want to delete this chat? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
       />
     </div>
   )

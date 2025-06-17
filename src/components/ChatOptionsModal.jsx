@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Edit3, Trash2 } from 'lucide-react'
+import ConfirmationModal from './ConfirmationModal'
 
 export default function ChatOptionsModal({
   isOpen,
@@ -12,6 +13,7 @@ export default function ChatOptionsModal({
   position,
 }) {
   const [isRenaming, setIsRenaming] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [newTitle, setNewTitle] = useState(chatTitle || '')
   const modalRef = useRef(null)
   const inputRef = useRef(null)
@@ -57,6 +59,7 @@ export default function ChatOptionsModal({
 
   const handleClose = () => {
     setIsRenaming(false)
+    setShowDeleteConfirm(false)
     setNewTitle(chatTitle || '')
     onClose()
   }
@@ -74,10 +77,12 @@ export default function ChatOptionsModal({
   }
 
   const handleDeleteClick = () => {
-    if (window.confirm('Are you sure you want to delete this chat?')) {
-      onDelete()
-      handleClose()
-    }
+    setShowDeleteConfirm(true)
+  }
+
+  const handleConfirmDelete = () => {
+    onDelete()
+    handleClose()
   }
 
   if (!isOpen) return null
@@ -129,6 +134,17 @@ export default function ChatOptionsModal({
           </button>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Chat"
+        message="Are you sure you want to delete this chat? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   )
 }
