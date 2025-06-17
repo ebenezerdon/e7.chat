@@ -49,6 +49,52 @@
   @apply w-5 h-5 text-gray-300;
 }
 
+/* Search Section */
+.search-section {
+  @apply px-3 py-3 border-b border-[#2c313a]/60;
+}
+
+.search-input-wrapper {
+  @apply relative flex items-center;
+}
+
+.search-icon {
+  @apply absolute left-3 text-gray-400 pointer-events-none;
+}
+
+.search-input {
+  @apply w-full bg-[#1e232a] border border-[#3a404b]/40 rounded-lg pl-9 pr-8 py-2.5 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all;
+}
+
+.search-input:focus {
+  @apply bg-[#1a1e24];
+}
+
+.clear-search-button {
+  @apply absolute right-2 w-5 h-5 rounded-md bg-[#3a404b]/60 hover:bg-[#3a404b]/80 flex items-center justify-center text-gray-400 hover:text-gray-300 transition-all duration-200 cursor-pointer;
+}
+
+.clear-search-button:hover {
+  @apply scale-105;
+}
+
+.search-results-count {
+  @apply text-xs text-gray-500 mt-2 px-1;
+}
+
+/* Empty Search Results */
+.empty-search-results {
+  @apply px-4 py-6 text-center;
+}
+
+.empty-search-text {
+  @apply text-gray-400 text-sm mb-3;
+}
+
+.clear-search-action {
+  @apply text-blue-400 hover:text-blue-300 text-sm underline underline-offset-2 transition-colors cursor-pointer;
+}
+
 .chat-list {
   @apply flex-1 overflow-y-auto px-2 pt-4;
   scrollbar-width: none; /* For Firefox */

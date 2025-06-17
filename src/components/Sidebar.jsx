@@ -1,8 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { PenLine, Menu, GitBranch, MoreHorizontal } from 'lucide-react'
+import {
+  PenLine,
+  Menu,
+  GitBranch,
+  MoreHorizontal,
+  Search,
+  X,
+} from 'lucide-react'
 import ChatOptionsModal from './ChatOptionsModal'
 import '../styles/sidebar.css'
 
@@ -15,6 +22,7 @@ export default function Sidebar({
   onDeleteChat,
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [optionsModal, setOptionsModal] = useState({
     isOpen: false,
     chatId: null,
@@ -22,9 +30,24 @@ export default function Sidebar({
     position: { top: 0, left: 0 },
   })
 
+  // Filter chats based on search query
+  const filteredChats = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return fetchedChats || []
+    }
+
+    const query = searchQuery.toLowerCase().trim()
+    return (fetchedChats || []).filter((chat) => {
+      const title = (chat.title || 'New Chat').toLowerCase()
+      return title.includes(query)
+    })
+  }, [fetchedChats, searchQuery])
+
   const openSidebar = () => setIsSidebarOpen(true)
 
   const closeSidebar = () => setIsSidebarOpen(false)
+
+  const clearSearch = () => setSearchQuery('')
 
   const handleOptionsClick = (e, chat) => {
     e.preventDefault()
@@ -97,8 +120,37 @@ export default function Sidebar({
           </button>
         </div>
 
+        {/* Search Section */}
+        <div className="search-section">
+          <div className="search-input-wrapper">
+            <Search className="search-icon" size={16} strokeWidth={1.5} />
+            <input
+              type="text"
+              placeholder="Search chats..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="clear-search-button"
+                aria-label="Clear search"
+              >
+                <X size={14} strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <div className="search-results-count">
+              {filteredChats.length} result
+              {filteredChats.length !== 1 ? 's' : ''}
+            </div>
+          )}
+        </div>
+
         <div className="chat-list">
-          {fetchedChats?.map((chat) => (
+          {filteredChats?.map((chat) => (
             <div key={chat.$id} className="chat-item-wrapper">
               <Link
                 href={`/?chatId=${chat.$id}`}
@@ -144,7 +196,18 @@ export default function Sidebar({
             </div>
           ))}
 
-          {fetchedChats?.length === 0 && (
+          {filteredChats?.length === 0 && searchQuery && (
+            <div className="empty-search-results">
+              <p className="empty-search-text">
+                No chats found for "{searchQuery}"
+              </p>
+              <button onClick={clearSearch} className="clear-search-action">
+                Clear search
+              </button>
+            </div>
+          )}
+
+          {filteredChats?.length === 0 && !searchQuery && (
             <p className="empty-chats">No chats yet</p>
           )}
         </div>
