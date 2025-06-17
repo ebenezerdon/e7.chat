@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../lib/auth'
-import { User, LogOut, ChevronDown } from 'lucide-react'
+import { User, LogOut, ChevronDown, Key } from 'lucide-react'
 
-const UserMenu = () => {
+const UserMenu = ({ onOpenApiKeyModal, userApiKey }) => {
   const [isOpen, setIsOpen] = useState(false)
   const { user, logout } = useAuth()
   const menuRef = useRef(null)
+  const [hasApiKey, setHasApiKey] = useState(false)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -20,6 +21,11 @@ const UserMenu = () => {
     }
   }, [])
 
+  useEffect(() => {
+    // Update hasApiKey based on the userApiKey prop
+    setHasApiKey(!!userApiKey)
+  }, [userApiKey])
+
   const handleLogout = async () => {
     try {
       await logout()
@@ -27,6 +33,11 @@ const UserMenu = () => {
     } catch (error) {
       console.error('Logout error:', error)
     }
+  }
+
+  const handleApiKeyClick = () => {
+    setIsOpen(false)
+    onOpenApiKeyModal()
   }
 
   if (!user) return null
@@ -51,6 +62,22 @@ const UserMenu = () => {
           >
             {user.email}
           </div>
+          <button onClick={handleApiKeyClick} className="user-menu-item">
+            <Key size={16} style={{ marginRight: '8px', display: 'inline' }} />
+            {hasApiKey ? 'Manage API Key' : 'Add API Key'}
+            {hasApiKey && (
+              <span
+                style={{
+                  marginLeft: 'auto',
+                  fontSize: '12px',
+                  color: '#22c55e',
+                  fontWeight: '500',
+                }}
+              >
+                ✓
+              </span>
+            )}
+          </button>
           <button onClick={handleLogout} className="user-menu-item danger">
             <LogOut
               size={16}
