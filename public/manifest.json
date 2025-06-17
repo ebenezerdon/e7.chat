@@ -1,7 +1,7 @@
 {
   "name": "e7.chat - AI Assistant",
   "short_name": "e7.chat",
-  "description": "Open-source ChatGPT alternative with 100+ AI models",
+  "description": "Open-source ChatGPT alternative",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1e24",
