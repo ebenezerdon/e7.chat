@@ -609,16 +609,34 @@ export default function Chat() {
 
       // If creating new chat, handle branching
       if (createNewChat) {
-        // Create a new chat without "branch from" prefix in title
-        const newChat = await createChat(
-          user,
+        // Generate versioned title for the branched chat
+        const generateVersionedTitle = (originalTitle) => {
+          if (!originalTitle) return '[2] New Chat'
+
+          // Check if title already has a version number in square brackets at the start
+          const versionMatch = originalTitle.match(/^\[(\d+)\]\s*(.+)$/)
+
+          if (versionMatch) {
+            // Title already has a version, increment it
+            const currentVersion = parseInt(versionMatch[1])
+            const titleWithoutVersion = versionMatch[2]
+            return `[${currentVersion + 1}] ${titleWithoutVersion}`
+          } else {
+            // No version yet, add [2] to the beginning
+            return `[2] ${originalTitle}`
+          }
+        }
+
+        const branchedTitle = generateVersionedTitle(
           currentChat?.title || 'New Chat',
-          {
-            isBranch: true,
-            parentChatId: currentChatId,
-            parentChatTitle: currentChat?.title || 'Chat',
-          },
         )
+
+        // Create a new chat with versioned title
+        const newChat = await createChat(user, branchedTitle, {
+          isBranch: true,
+          parentChatId: currentChatId,
+          parentChatTitle: currentChat?.title || 'Chat',
+        })
 
         // Save all the messages to the new chat
         for (const message of messagesToRegenerate) {
