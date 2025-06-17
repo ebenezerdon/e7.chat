@@ -72,10 +72,6 @@ const LLM_PROVIDERS = {
         name: 'Gemini 2.5 Flash Preview',
         description: 'Hybrid reasoning with thinking budgets',
       },
-      'gemini-2.5-pro-preview-06-05': {
-        name: 'Gemini 2.5 Pro Preview',
-        description: 'Enhanced reasoning and analysis',
-      },
       'gemini-2.0-flash': {
         name: 'Gemini 2.0 Flash',
         description: 'Multimodal with 1M token context',
@@ -110,7 +106,7 @@ const LLM_PROVIDERS = {
 const DEFAULT_MODELS = {
   openai: 'gpt-4o',
   anthropic: 'claude-3-5-sonnet-20241022',
-  google: 'gemini-2.5-flash-preview-05-20',
+  google: 'gemini-2.0-flash',
   deepseek: 'deepseek-chat',
 }
 
