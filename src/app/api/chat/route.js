@@ -192,14 +192,7 @@ export async function POST(req) {
 
 export async function GET() {
   try {
-    // Note: GET route still requires server API key for public model listing
-    if (!process.env.OPENROUTER_API_KEY) {
-      return Response.json(
-        { error: 'Server OpenRouter API key not configured for model listing' },
-        { status: 500 },
-      )
-    }
-
+    // Always return model list for selection - users can provide their own API keys
     return Response.json({
       providers: CURATED_MODELS,
       defaultProvider: 'openai',
