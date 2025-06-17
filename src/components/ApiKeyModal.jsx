@@ -503,14 +503,14 @@ const ApiKeyModal = ({ isOpen, onClose, onSave, user }) => {
               </div>
 
               <div className="get-key-section">
-                <p>Don't have a {activeProvider.name} API key?</p>
+                <p>Don't have your {activeProvider.name} API key?</p>
                 <a
                   href={activeProvider.dashboardUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="get-key-link"
                 >
-                  Get your API key <ExternalLink size={14} />
+                  Get an API key <ExternalLink size={14} />
                 </a>
               </div>
             </div>
