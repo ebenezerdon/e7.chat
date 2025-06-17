@@ -16,7 +16,56 @@
 }
 
 .chat-header {
-  @apply p-4 sm:p-8 border-b border-[#2c313a]/80 flex items-center justify-between bg-gradient-to-r from-[#1a1e24]/50 to-[#1e2329]/50;
+  @apply p-4 sm:p-8 border-b border-[#2c313a]/80 bg-gradient-to-r from-[#1a1e24]/50 to-[#1e2329]/50;
+}
+
+/* Desktop: single row layout */
+@media (min-width: 640px) {
+  .chat-header {
+    @apply flex items-center justify-between;
+  }
+
+  /* Hide mobile elements on desktop */
+  .nav-controls {
+    @apply hidden;
+  }
+
+  .title-row {
+    @apply hidden;
+  }
+
+  /* Show desktop elements */
+  .title-group {
+    @apply flex items-center gap-2;
+  }
+
+  .auth-controls {
+    @apply flex items-center gap-3;
+  }
+}
+
+/* Mobile: stacked layout */
+@media (max-width: 640px) {
+  .chat-header {
+    @apply flex flex-col gap-3;
+  }
+
+  .nav-controls {
+    @apply flex justify-end;
+  }
+
+  .title-row {
+    @apply flex;
+  }
+
+  /* Hide desktop elements on mobile */
+  .chat-header > .title-group {
+    @apply hidden;
+  }
+
+  .chat-header > .auth-controls {
+    @apply hidden;
+  }
 }
 
 .auth-controls {
@@ -64,6 +113,25 @@
   .chat-header {
     @apply pl-16; /* Make room for the menu button */
   }
+
+  /* Hide user name on mobile, keep only icon */
+  .user-name-text {
+    @apply hidden;
+  }
+
+  /* Reduce gap in auth controls on mobile */
+  .auth-controls {
+    @apply gap-2;
+  }
+
+  /* Make API key indicator more compact */
+  .api-key-indicator {
+    @apply px-2 py-1.5 text-xs;
+  }
+
+  .api-key-indicator span {
+    @apply hidden sm:inline;
+  }
 }
 
 .title-group {
@@ -72,6 +140,18 @@
 
 .chat-title {
   @apply text-xl sm:text-2xl font-medium tracking-tight text-gray-100 flex items-center gap-3;
+}
+
+/* Truncate title on mobile for better layout */
+@media (max-width: 640px) {
+  .chat-title {
+    @apply text-lg;
+    max-width: 24ch; /* Limit to ~25 characters */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block; /* Ensure block display for ellipsis to work */
+  }
 }
 
 .parent-chat-link {
@@ -238,6 +318,17 @@
 
 .input-form {
   @apply flex items-center gap-3 w-full max-w-5xl;
+}
+
+/* Desktop: horizontal layout */
+@media (min-width: 640px) {
+  .input-form {
+    @apply flex-row;
+  }
+
+  .mobile-input-row {
+    @apply flex items-center gap-3 w-full;
+  }
 }
 
 .input-field {
@@ -540,14 +631,23 @@
     background-image: linear-gradient(to right, #1a1e24, #1e2329);
     border-top: 1px solid #2c313a;
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0));
-    min-height: 60px;
+    min-height: 80px; /* Increased to accommodate stacked layout */
     transform: translateZ(0);
     box-shadow: 0 -1px 10px rgba(0, 0, 0, 0.2);
   }
 
   .input-form {
-    @apply w-full;
+    @apply w-full flex flex-col gap-2; /* Stack elements vertically on mobile */
     height: 100%;
+  }
+
+  /* Mobile-specific input row styles */
+  .mobile-input-row {
+    @apply flex items-center gap-2 w-full;
+  }
+
+  .mobile-bottom-row {
+    @apply flex items-center justify-between gap-2 w-full;
   }
 
   .message-content {
@@ -787,6 +887,11 @@
 
   .model-selector-pill {
     @apply w-32;
+  }
+
+  /* Compact model selector on mobile bottom row */
+  .mobile-bottom-row .model-selector-pill {
+    @apply w-auto max-w-[140px];
   }
 }
 

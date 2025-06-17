@@ -39,7 +39,7 @@ const UserMenu = () => {
         aria-label="User menu"
       >
         <User size={18} />
-        <span>{user.name || user.email}</span>
+        <span className="user-name-text">{user.name || user.email}</span>
         <ChevronDown size={16} />
       </button>
 

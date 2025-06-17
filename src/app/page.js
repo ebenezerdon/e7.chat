@@ -1098,6 +1098,127 @@ export default function Chat() {
       />
       <div className="chat-main">
         <div className="chat-header">
+          {/* Mobile: Navigation controls only */}
+          <div className="nav-controls">
+            <div className="auth-controls">
+              {user && userApiKey && (
+                <button
+                  onClick={() => setShowApiKeyModal(true)}
+                  className="api-key-indicator"
+                  style={{
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'
+                  }}
+                  title="Manage your personal OpenRouter API key (synced across devices)"
+                >
+                  <Key size={14} />
+                  <span>Personal Key</span>
+                </button>
+              )}
+              {!user && userApiKey && (
+                <div
+                  className="api-key-indicator"
+                  title="Using your personal OpenRouter API key (local only)"
+                  style={{
+                    borderColor: '#f59e0b',
+                    backgroundColor: '#f59e0b/20',
+                  }}
+                >
+                  <Key size={14} />
+                  <span>Local Key</span>
+                </div>
+              )}
+              {user && !userApiKey && (
+                <button
+                  onClick={() => setShowApiKeyModal(true)}
+                  className="api-key-indicator"
+                  style={{
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'transparent',
+                    color: '#f59e0b',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = 'rgba(245, 158, 11, 0.1)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent'
+                  }}
+                  title="Add your personal OpenRouter API key for better performance"
+                >
+                  <Key size={14} />
+                  <span>Add API Key</span>
+                </button>
+              )}
+              {user &&
+                currentChatId &&
+                !currentChatId.startsWith('temp-') &&
+                messages.length > 0 && (
+                  <button
+                    onClick={() => setShowShareModal(true)}
+                    className="share-button-small"
+                    aria-label="Share chat"
+                  >
+                    <Share2 className="share-icon-small" strokeWidth={1.5} />
+                  </button>
+                )}
+              {user ? (
+                <UserMenu />
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="auth-button"
+                  aria-label="Sign in"
+                >
+                  <LogIn size={18} />
+                  Sign In
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile: Title row - separate row on mobile */}
+          <div className="title-row">
+            <div className="title-group">
+              <h1 className="chat-title">
+                {currentChat?.title || 'New Chat'}
+                {currentChatId?.startsWith('temp-') && (
+                  <span className="creating-indicator"> (Creating...)</span>
+                )}
+                {currentChat?.isBranch && currentChat?.parentChatId && (
+                  <button
+                    onClick={() => handleChatSelect(currentChat.parentChatId)}
+                    className="parent-chat-link"
+                    title={`Go to parent chat: ${
+                      currentChat?.parentChatTitle || 'Parent Chat'
+                    }`}
+                  >
+                    <CornerUpRight size={12} strokeWidth={1.5} />
+                    <span>Go to parent branch</span>
+                  </button>
+                )}
+              </h1>
+              <div className="header-actions">
+                <button
+                  onClick={handleDeleteChat}
+                  className="delete-button"
+                  disabled={currentChatId?.startsWith('temp-')}
+                  aria-label="Delete chat"
+                >
+                  <MinusCircle className="delete-icon" strokeWidth={1.5} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop */}
           <div className="title-group">
             <h1 className="chat-title">
               {currentChat?.title || 'New Chat'}
@@ -1234,45 +1355,65 @@ export default function Chat() {
           )}
 
           <form onSubmit={handleChatSubmit} className="input-form">
-            <ModelSelector
-              selectedModel={selectedModel}
-              onModelChange={handleModelChange}
-              hasApiKey={!!userApiKey}
-              onApiKeyRequired={() => setShowApiKeyModal(true)}
-            />
-            <FileUpload
-              files={attachedFiles}
-              onFilesChange={setAttachedFiles}
-              showAttachmentsList={false}
-            />
-            <input
-              value={input}
-              placeholder={
-                currentChatId?.startsWith('temp-')
-                  ? 'Creating chat...'
-                  : 'Message AI Assistant or ask to generate an image...'
-              }
-              onChange={handleInputChange}
-              disabled={
-                (status !== 'ready' && status !== undefined) ||
-                currentChatId?.startsWith('temp-')
-              }
-              className="input-field"
-              aria-label="Chat input"
-            />
-            <button
-              type="submit"
-              disabled={
-                !input.trim() ||
-                status === 'submitted' ||
-                status === 'streaming' ||
-                currentChatId?.startsWith('temp-')
-              }
-              className="submit-button"
-              aria-label="Send message"
-            >
-              <SendHorizontal className="submit-icon" strokeWidth={1.5} />
-            </button>
+            {/* Main input row - always has FileUpload + Input + Send button */}
+            <div className="mobile-input-row">
+              {/* Desktop model selector - hidden on mobile */}
+              <div className="hidden sm:block">
+                <ModelSelector
+                  selectedModel={selectedModel}
+                  onModelChange={handleModelChange}
+                  hasApiKey={!!userApiKey}
+                  onApiKeyRequired={() => setShowApiKeyModal(true)}
+                />
+              </div>
+
+              <FileUpload
+                files={attachedFiles}
+                onFilesChange={setAttachedFiles}
+                showAttachmentsList={false}
+              />
+
+              <input
+                value={input}
+                placeholder={
+                  currentChatId?.startsWith('temp-')
+                    ? 'Creating chat...'
+                    : 'Message AI Assistant or ask to generate an image...'
+                }
+                onChange={handleInputChange}
+                disabled={
+                  (status !== 'ready' && status !== undefined) ||
+                  currentChatId?.startsWith('temp-')
+                }
+                className="input-field"
+                aria-label="Chat input"
+              />
+
+              {/* Single send button - always beside input */}
+              <button
+                type="submit"
+                disabled={
+                  !input.trim() ||
+                  status === 'submitted' ||
+                  status === 'streaming' ||
+                  currentChatId?.startsWith('temp-')
+                }
+                className="submit-button"
+                aria-label="Send message"
+              >
+                <SendHorizontal className="submit-icon" strokeWidth={1.5} />
+              </button>
+            </div>
+
+            {/* Mobile model selector row - only shown on mobile */}
+            <div className="mobile-bottom-row sm:hidden">
+              <ModelSelector
+                selectedModel={selectedModel}
+                onModelChange={handleModelChange}
+                hasApiKey={!!userApiKey}
+                onApiKeyRequired={() => setShowApiKeyModal(true)}
+              />
+            </div>
           </form>
         </div>
       </div>
