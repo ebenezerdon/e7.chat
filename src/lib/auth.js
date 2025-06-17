@@ -32,18 +32,20 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithGoogle = async () => {
     try {
-      // Use NEXT_PUBLIC_FRONTEND_URL for redirect URLs
-      const frontendUrl =
-        process.env.NEXT_PUBLIC_FRONTEND_URL ||
-        (typeof window !== 'undefined'
+      // Use current origin for redirect URLs
+      const currentOrigin =
+        typeof window !== 'undefined'
           ? window.location.origin
-          : 'http://localhost:3000')
+          : 'http://localhost:3000'
+
+      console.log('Current origin being used:', currentOrigin)
+      console.log('Success URL:', `${currentOrigin}/auth/success`)
+      console.log('Failure URL:', `${currentOrigin}/auth/failure`)
 
       await account.createOAuth2Session(
         'google',
-        'google',
-        `${frontendUrl}`, // Success redirect
-        `${frontendUrl}/failure`, // Failure redirect
+        `${currentOrigin}/auth/success`, // Success redirect
+        `${currentOrigin}/auth/failure`, // Failure redirect
       )
     } catch (error) {
       throw error
@@ -52,17 +54,20 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithGitHub = async () => {
     try {
-      // Use NEXT_PUBLIC_FRONTEND_URL for redirect URLs
-      const frontendUrl =
-        process.env.NEXT_PUBLIC_FRONTEND_URL ||
-        (typeof window !== 'undefined'
+      // Use current origin for redirect URLs
+      const currentOrigin =
+        typeof window !== 'undefined'
           ? window.location.origin
-          : 'http://localhost:3000')
+          : 'http://localhost:3000'
+
+      console.log('GitHub Current origin being used:', currentOrigin)
+      console.log('GitHub Success URL:', `${currentOrigin}/auth/success`)
+      console.log('GitHub Failure URL:', `${currentOrigin}/auth/failure`)
 
       await account.createOAuth2Session(
         'github',
-        `${frontendUrl}`, // Success redirect
-        `${frontendUrl}/auth/failure`, // Failure redirect
+        `${currentOrigin}/auth/success`, // Success redirect
+        `${currentOrigin}/auth/failure`, // Failure redirect
       )
     } catch (error) {
       throw error

@@ -535,8 +535,7 @@ export const getChatShareStatus = async (user, chatId) => {
         isShared: true,
         shareId: sharedChat.shareId,
         shareUrl: `${
-          process.env.NEXT_PUBLIC_FRONTEND_URL ||
-          (typeof window !== 'undefined' ? window.location.origin : '')
+          typeof window !== 'undefined' ? window.location.origin : ''
         }/share/${sharedChat.shareId}`,
         sharedAt: sharedChat.sharedAt,
       }
