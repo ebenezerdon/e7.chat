@@ -843,13 +843,16 @@ export default function Chat() {
             setUserApiKey(decryptedKey)
             return
           } else {
-            // No cloud key found
-            setUserApiKey(null)
+            // No cloud key found, check localStorage
+            const savedKey = localStorage.getItem('userOpenRouterApiKey')
+            setUserApiKey(savedKey || null)
             return
           }
         } catch (error) {
           console.error('Failed to load cloud API key:', error)
-          setUserApiKey(null)
+          // Fallback to localStorage on error
+          const savedKey = localStorage.getItem('userOpenRouterApiKey')
+          setUserApiKey(savedKey || null)
           return
         }
       } else {
@@ -896,16 +899,27 @@ export default function Chat() {
           </div>
 
           <div className="auth-controls">
-            {userApiKey && user && (
-              <div
+            {user && userApiKey && (
+              <button
+                onClick={() => setShowApiKeyModal(true)}
                 className="api-key-indicator"
-                title="Using your personal OpenRouter API key (synced across devices)"
+                style={{
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'
+                }}
+                title="Manage your personal OpenRouter API key (synced across devices)"
               >
                 <Key size={14} />
                 <span>Personal Key</span>
-              </div>
+              </button>
             )}
-            {userApiKey && !user && (
+            {!user && userApiKey && (
               <div
                 className="api-key-indicator"
                 title="Using your personal OpenRouter API key (local only)"
@@ -917,6 +931,29 @@ export default function Chat() {
                 <Key size={14} />
                 <span>Local Key</span>
               </div>
+            )}
+            {user && !userApiKey && (
+              <button
+                onClick={() => setShowApiKeyModal(true)}
+                className="api-key-indicator"
+                style={{
+                  borderColor: '#f59e0b',
+                  backgroundColor: 'transparent',
+                  color: '#f59e0b',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = 'rgba(245, 158, 11, 0.1)'
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'transparent'
+                }}
+                title="Add your personal OpenRouter API key for better performance"
+              >
+                <Key size={14} />
+                <span>Add API Key</span>
+              </button>
             )}
             {user &&
               currentChatId &&
@@ -931,10 +968,7 @@ export default function Chat() {
                 </button>
               )}
             {user ? (
-              <UserMenu
-                onOpenApiKeyModal={() => setShowApiKeyModal(true)}
-                userApiKey={userApiKey}
-              />
+              <UserMenu />
             ) : (
               <button
                 onClick={() => setShowAuthModal(true)}
