@@ -531,7 +531,11 @@ export default function Chat() {
     router.push(`/?chatId=${chatId}`)
   }
 
-  const handleRegenerate = async (messageIndex, modelId) => {
+  const handleRegenerate = async (
+    messageIndex,
+    modelId,
+    createNewChat = false,
+  ) => {
     if (!user || !currentChatId || messageIndex === undefined) return
 
     try {
@@ -543,6 +547,33 @@ export default function Chat() {
       // Make sure we have at least one user message to regenerate from
       if (messagesToRegenerate.length === 0) {
         throw new Error('No messages to regenerate from')
+      }
+
+      // If creating new chat, handle branching
+      if (createNewChat) {
+        // Create a new chat
+        const newChat = await createChat(
+          user,
+          `Branch from ${currentChat?.title || 'Chat'}`,
+        )
+
+        // Save all the messages to the new chat
+        for (const message of messagesToRegenerate) {
+          await saveMessage(
+            user,
+            newChat.$id,
+            message.role,
+            message.content,
+            message.model || null,
+          )
+        }
+
+        // Navigate to the new chat
+        router.push(`/?chatId=${newChat.$id}`)
+        setCurrentChatId(newChat.$id)
+
+        // Update chats list to include the new chat
+        await loadChats()
       }
 
       // Make API call with the selected model
@@ -571,14 +602,25 @@ export default function Chat() {
 
       // Create new message list by removing everything after messageIndex
       // and replacing the message at messageIndex with empty content for streaming
-      const newMessages = [...messages.slice(0, messageIndex + 1)]
-
-      // Replace the message at messageIndex with empty content to start streaming
-      newMessages[messageIndex] = {
-        ...newMessages[messageIndex],
-        id: `regenerated-${Date.now()}`,
-        content: '',
-        model: modelId,
+      let newMessages
+      if (createNewChat) {
+        // For new chat, start with the messages we copied and add the new one
+        newMessages = [...messagesToRegenerate]
+        newMessages.push({
+          id: `regenerated-${Date.now()}`,
+          role: 'assistant',
+          content: '',
+          model: modelId,
+        })
+      } else {
+        // For same chat, replace the existing message
+        newMessages = [...messages.slice(0, messageIndex + 1)]
+        newMessages[messageIndex] = {
+          ...newMessages[messageIndex],
+          id: `regenerated-${Date.now()}`,
+          content: '',
+          model: modelId,
+        }
       }
       setMessages(newMessages)
 
@@ -600,8 +642,11 @@ export default function Chat() {
                 // Update the regenerated message with new content
                 setMessages((prev) => {
                   const updated = [...prev]
-                  updated[messageIndex] = {
-                    ...updated[messageIndex],
+                  const targetIndex = createNewChat
+                    ? prev.length - 1
+                    : messageIndex
+                  updated[targetIndex] = {
+                    ...updated[targetIndex],
                     content: accumulatedContent,
                     model: modelId,
                   }
@@ -616,14 +661,20 @@ export default function Chat() {
       }
 
       // Save the regenerated message to database
-      if (currentChatId && accumulatedContent) {
-        const messageId = newMessages[messageIndex].id
+      // For new chats, we need to reference the newly created chat
+      // For existing chats, use the current chat ID
+      const targetChatId = currentChatId
+      if (targetChatId && accumulatedContent) {
+        const targetIndex = createNewChat
+          ? newMessages.length - 1
+          : messageIndex
+        const messageId = newMessages[targetIndex].id
         setSavingMessages((prev) => new Set([...prev, messageId]))
 
         try {
           await saveMessage(
             user,
-            currentChatId,
+            targetChatId,
             'assistant',
             accumulatedContent,
             modelId,

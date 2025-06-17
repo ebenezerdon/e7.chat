@@ -7,6 +7,7 @@ import {
   RotateCcw,
   ChevronDown,
   Star,
+  ExternalLink,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { useState, useEffect, useRef } from 'react'
@@ -32,6 +33,7 @@ const Message = ({
   const [showRegenerateDropdown, setShowRegenerateDropdown] = useState(false)
   const [availableModels, setAvailableModels] = useState({})
   const [loadingModels, setLoadingModels] = useState(true)
+  const [createNewChat, setCreateNewChat] = useState(false)
   const regenerateRef = useRef(null)
 
   // Load available models when component mounts
@@ -83,8 +85,9 @@ const Message = ({
 
   const handleRegenerateWithModel = (modelId) => {
     if (onRegenerate && messageIndex !== undefined) {
-      onRegenerate(messageIndex, modelId)
+      onRegenerate(messageIndex, modelId, createNewChat)
       setShowRegenerateDropdown(false)
+      setCreateNewChat(false) // Reset toggle after use
     }
   }
 
@@ -476,6 +479,23 @@ const Message = ({
                   <div className="regenerate-dropdown">
                     <div className="regenerate-dropdown-header">
                       <span>Choose model to regenerate with:</span>
+                    </div>
+
+                    {/* New Chat Toggle */}
+                    <div className="regenerate-toggle-section">
+                      <label className="regenerate-toggle">
+                        <input
+                          type="checkbox"
+                          checked={createNewChat}
+                          onChange={(e) => setCreateNewChat(e.target.checked)}
+                          className="regenerate-checkbox"
+                        />
+                        <div className="regenerate-toggle-slider"></div>
+                        <div className="regenerate-toggle-content">
+                          <ExternalLink size={14} />
+                          <span>Open in new chat</span>
+                        </div>
+                      </label>
                     </div>
 
                     {/* Featured Models */}
