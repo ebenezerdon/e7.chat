@@ -330,6 +330,10 @@ export default function Chat() {
         'Using OpenAI API key:',
         userOpenAiKey ? 'User key present' : 'No user key',
       )
+      console.log(
+        'User object:',
+        user ? { id: user.$id, email: user.email } : 'No user',
+      )
 
       // Add user message to chat immediately
       const userMessage = {
@@ -364,6 +368,7 @@ export default function Chat() {
         headers: {
           'Content-Type': 'application/json',
           ...(userOpenAiKey && { 'X-User-API-Key': userOpenAiKey }),
+          ...(user && { 'X-User-ID': user.$id }),
         },
         body: JSON.stringify({
           prompt: prompt,
