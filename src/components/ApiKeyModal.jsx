@@ -52,11 +52,10 @@ const PROVIDERS = {
     placeholder: 'sk-or-...',
     keyPrefix: 'sk-or-',
     dashboardUrl: 'https://openrouter.ai/keys',
-    description: 'Access 400+ AI models with your own OpenRouter API key',
+    description: 'Access more AI models with your own OpenRouter API key',
     testUrl: 'https://openrouter.ai/api/v1/auth/key',
     localStorageKey: 'userOpenRouterApiKey',
     benefits: [
-      '- Access to 400+ AI models',
       '- Direct control over costs and usage',
       '- Higher rate limits',
       '- Better performance',
@@ -71,12 +70,7 @@ const PROVIDERS = {
     description: 'Use your OpenAI API key for DALL-E image generation',
     testUrl: 'https://api.openai.com/v1/models',
     localStorageKey: 'userOpenAiApiKey',
-    benefits: [
-      '- Direct access to DALL-E models',
-      '- No rate limits from our server',
-      '- Full control over usage',
-      '- Better image generation speed',
-    ],
+    benefits: ['- No rate limits from our server', '- Full control over usage'],
   },
 }
 
