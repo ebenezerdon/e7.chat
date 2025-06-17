@@ -120,7 +120,7 @@ export const getChats = async (user) => {
 }
 
 // Chat operations
-export const createChat = async (user, title = 'New Chat') => {
+export const createChat = async (user, title = 'New Chat', metadata = {}) => {
   if (!user) {
     throw new Error('Authentication required to create chats')
   }
@@ -136,6 +136,10 @@ export const createChat = async (user, title = 'New Chat') => {
       messageCount: 0,
       isArchived: false,
       isPinned: false,
+      // Add metadata fields for branching
+      isBranch: metadata.isBranch || false,
+      parentChatId: metadata.parentChatId || null,
+      parentChatTitle: metadata.parentChatTitle || null,
     }
 
     const result = await databases.createDocument(
@@ -249,6 +253,9 @@ const updateChatInMetadata = async (user, chatData, operation) => {
         messageCount: chatData.messageCount || 0,
         isArchived: chatData.isArchived || false,
         isPinned: chatData.isPinned || false,
+        isBranch: chatData.isBranch || false,
+        parentChatId: chatData.parentChatId || null,
+        parentChatTitle: chatData.parentChatTitle || null,
       })
     } else if (operation === 'update') {
       // Update existing chat summary
@@ -268,6 +275,18 @@ const updateChatInMetadata = async (user, chatData, operation) => {
             chatData.isPinned !== undefined
               ? chatData.isPinned
               : chatSummaries[index].isPinned,
+          isBranch:
+            chatData.isBranch !== undefined
+              ? chatData.isBranch
+              : chatSummaries[index].isBranch,
+          parentChatId:
+            chatData.parentChatId !== undefined
+              ? chatData.parentChatId
+              : chatSummaries[index].parentChatId,
+          parentChatTitle:
+            chatData.parentChatTitle !== undefined
+              ? chatData.parentChatTitle
+              : chatSummaries[index].parentChatTitle,
         }
       }
     } else if (operation === 'delete') {

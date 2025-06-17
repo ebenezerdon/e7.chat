@@ -72,6 +72,14 @@
   @apply flex items-center px-4 sm:px-6 py-3 sm:py-4 w-full text-left hover:bg-gradient-to-r hover:from-[#2c313a]/90 hover:to-[#2c313a]/70 transition-all rounded-lg my-1 border border-transparent hover:border-[#3a404b]/20;
 }
 
+.chat-item-content {
+  @apply flex items-center gap-2 w-full;
+}
+
+.branch-icon {
+  @apply text-amber-400 flex-shrink-0;
+}
+
 .chat-item-active {
   @apply bg-gradient-to-r from-[#2c313a] to-[#2e333d] border-[#3a404b]/30;
 }

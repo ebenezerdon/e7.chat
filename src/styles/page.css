@@ -70,6 +70,18 @@
   @apply flex items-center gap-2;
 }
 
+.chat-title {
+  @apply text-xl sm:text-2xl font-medium tracking-tight text-gray-100 flex items-center gap-3;
+}
+
+.parent-chat-link {
+  @apply flex items-center gap-1.5 px-2 py-1 bg-purple-600/10 hover:bg-purple-600/20 border border-purple-500/20 hover:border-purple-400/30 rounded-md text-purple-300 hover:text-purple-200 transition-all duration-200 cursor-pointer text-xs opacity-70 hover:opacity-100;
+}
+
+.parent-chat-link span {
+  @apply truncate max-w-[120px] font-normal;
+}
+
 .header-actions {
   @apply flex items-center gap-2;
 }
@@ -99,10 +111,6 @@
 
 .share-icon-small {
   @apply w-4 h-4;
-}
-
-.chat-title {
-  @apply text-xl sm:text-2xl font-medium tracking-tight text-gray-100;
 }
 
 .creating-indicator {
