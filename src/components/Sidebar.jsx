@@ -107,7 +107,7 @@ export default function Sidebar({
 
       <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <h2 className="sidebar-title">Chats</h2>
+          <h2 className="sidebar-title">e7.chat</h2>
           <button
             onClick={() => {
               initializeNewChat()
@@ -216,7 +216,7 @@ export default function Sidebar({
           <div className="ai-status">
             <div className="ai-status-indicator">
               <div className="ai-status-dot"></div>
-              <div className="ai-status-text">Ai Assistant</div>
+              <div className="ai-status-text">e7.chat</div>
             </div>
             <div className="ai-status-subtext">Here to help, 24/7</div>
           </div>
