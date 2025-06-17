@@ -1,211 +1,87 @@
+@reference "tailwindcss";
+
 /* Authentication Modal Styles */
 .auth-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
+  @apply fixed inset-0 bg-black/60 flex items-center justify-center z-[1000] backdrop-blur-sm;
 }
 
 .auth-modal {
-  background: white;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 400px;
-  margin: 20px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
+  @apply bg-gradient-to-b from-[#1e232a] to-[#20252d] rounded-xl w-full max-w-md mx-5 shadow-2xl shadow-black/30 border border-[#2c313a]/80 overflow-hidden;
 }
 
 .auth-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  @apply flex justify-between items-center px-6 py-5 border-b border-[#2c313a]/80 bg-gradient-to-r from-[#1a1e24] to-[#1e232a];
 }
 
 .auth-modal-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #111827;
+  @apply m-0 text-xl font-semibold text-white tracking-tight;
 }
 
 .auth-modal-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  color: #6b7280;
-  transition: all 0.2s;
-}
-
-.auth-modal-close:hover {
-  background-color: #f3f4f6;
-  color: #111827;
+  @apply bg-transparent border-none cursor-pointer p-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-[#2c313a]/60 transition-all duration-200;
 }
 
 .auth-form {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  @apply px-6 py-6 flex flex-col gap-4;
 }
 
 .auth-field {
-  position: relative;
-  display: flex;
-  align-items: center;
+  @apply relative flex items-center;
 }
 
 .auth-field-icon {
-  position: absolute;
-  left: 12px;
-  color: #6b7280;
-  z-index: 1;
+  @apply absolute left-3 text-gray-400 pointer-events-none z-10;
 }
 
 .auth-input {
-  width: 100%;
-  padding: 12px 12px 12px 40px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.2s;
-  background-color: #fff;
+  @apply w-full bg-[#1a1e24] border border-[#3a404b]/40 rounded-lg pl-10 pr-4 py-3 text-gray-300 text-sm placeholder-gray-500 transition-all duration-200 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:bg-[#1e232a];
 }
 
-.auth-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.auth-input::placeholder {
-  color: #9ca3af;
+.password-toggle {
+  @apply absolute right-3 bg-transparent border-none cursor-pointer p-1 rounded-md text-gray-400 hover:text-gray-200 hover:bg-[#2c313a]/60 transition-all duration-200 z-10;
 }
 
 .auth-error {
-  color: #dc2626;
-  font-size: 14px;
-  text-align: center;
-  padding: 8px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
+  @apply text-red-400 text-sm text-center p-3 bg-red-500/10 border border-red-500/30 rounded-lg backdrop-blur-sm;
 }
 
 .auth-submit {
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 8px;
-}
-
-.auth-submit:hover:not(:disabled) {
-  background-color: #2563eb;
-}
-
-.auth-submit:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
+  @apply bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white border-none px-6 py-3 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-blue-600 disabled:hover:to-blue-700 shadow-lg shadow-blue-600/20;
 }
 
 .auth-switch {
-  padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
-  text-align: center;
-  font-size: 14px;
-  color: #6b7280;
+  @apply px-6 py-4 border-t border-[#2c313a]/80 text-center text-sm text-gray-400 bg-gradient-to-r from-[#1a1e24] to-[#1e232a];
 }
 
 .auth-switch-button {
-  background: none;
-  border: none;
-  color: #3b82f6;
-  cursor: pointer;
-  font-weight: 500;
-  text-decoration: underline;
-  padding: 0;
-}
-
-.auth-switch-button:hover {
-  color: #2563eb;
+  @apply bg-transparent border-none text-blue-400 hover:text-blue-300 cursor-pointer font-medium underline underline-offset-2 p-0 transition-colors duration-200;
 }
 
 /* User menu styles */
 .user-menu {
-  position: relative;
-  display: inline-block;
+  @apply relative inline-block;
 }
 
 .user-menu-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-  color: #f3f4f6;
-}
-
-.user-menu-button:hover {
-  background-color: rgba(55, 65, 81, 0.5);
+  @apply bg-transparent border-none cursor-pointer p-2 rounded-lg flex items-center gap-2 transition-all duration-200 text-gray-200 hover:bg-[#2c313a]/50;
 }
 
 .user-menu-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: #2c313a;
-  border: 1px solid #3a404b;
-  border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3),
-    0 4px 6px -2px rgba(0, 0, 0, 0.1);
-  min-width: 160px;
-  z-index: 100;
-  overflow: hidden;
+  @apply absolute top-full right-0 bg-gradient-to-b from-[#2c313a] to-[#2e333d] border border-[#3a404b]/60 rounded-lg shadow-xl shadow-black/30 min-w-40 z-[100] overflow-hidden backdrop-blur-sm;
 }
 
 .user-menu-item {
-  display: block;
-  width: 100%;
-  padding: 12px 16px;
-  background: none;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  font-size: 14px;
-  color: #f3f4f6;
-  transition: background-color 0.2s;
+  @apply block w-full px-4 py-3 bg-transparent border-none text-left cursor-pointer text-sm text-gray-200 transition-all duration-200 hover:bg-[#3a404b]/30 hover:text-white;
 }
 
-.user-menu-item:hover {
-  background-color: rgba(55, 65, 81, 0.5);
+.user-menu-item:first-child {
+  @apply rounded-t-lg;
+}
+
+.user-menu-item:last-child {
+  @apply rounded-b-lg;
 }
 
 .user-menu-item.danger {
-  color: #ef4444;
-}
-
-.user-menu-item.danger:hover {
-  background-color: rgba(239, 68, 68, 0.1);
+  @apply text-red-400 hover:text-red-300 hover:bg-red-500/10;
 }
