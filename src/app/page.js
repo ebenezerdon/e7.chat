@@ -41,6 +41,9 @@ export default function Chat() {
   // LLM model selection state (simplified for OpenRouter)
   const [selectedModel, setSelectedModel] = useState('openai/gpt-4o')
 
+  // Regenerate state
+  const [regeneratingMessageIndex, setRegeneratingMessageIndex] = useState(null)
+
   const {
     messages,
     input,
@@ -515,6 +518,122 @@ export default function Chat() {
     router.push(`/?chatId=${chatId}`)
   }
 
+  const handleRegenerate = async (messageIndex, modelId) => {
+    if (!user || !currentChatId || messageIndex === undefined) return
+
+    try {
+      setRegeneratingMessageIndex(messageIndex)
+
+      // Get all messages up to the message being regenerated (excluding the AI response)
+      const messagesToRegenerate = messages.slice(0, messageIndex)
+
+      // Make sure we have at least one user message to regenerate from
+      if (messagesToRegenerate.length === 0) {
+        throw new Error('No messages to regenerate from')
+      }
+
+      // Make API call with the selected model
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: messagesToRegenerate.map((msg) => ({
+            role: msg.role,
+            content: msg.content,
+          })),
+          model: modelId,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to regenerate response')
+      }
+
+      // Handle streaming response
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let accumulatedContent = ''
+
+      // Create new message list by removing everything after messageIndex
+      // and replacing the message at messageIndex with empty content for streaming
+      const newMessages = [...messages.slice(0, messageIndex + 1)]
+
+      // Replace the message at messageIndex with empty content to start streaming
+      newMessages[messageIndex] = {
+        ...newMessages[messageIndex],
+        id: `regenerated-${Date.now()}`,
+        content: '',
+      }
+      setMessages(newMessages)
+
+      // Stream the regenerated response
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            try {
+              const content = JSON.parse(line.slice(2))
+              if (content) {
+                accumulatedContent += content
+
+                // Update the regenerated message with new content
+                setMessages((prev) => {
+                  const updated = [...prev]
+                  updated[messageIndex] = {
+                    ...updated[messageIndex],
+                    content: accumulatedContent,
+                  }
+                  return updated
+                })
+              }
+            } catch (e) {
+              console.error('Error parsing stream chunk:', e)
+            }
+          }
+        }
+      }
+
+      // Save the regenerated message to database
+      if (currentChatId && accumulatedContent) {
+        const messageId = newMessages[messageIndex].id
+        setSavingMessages((prev) => new Set([...prev, messageId]))
+
+        try {
+          await saveMessage(
+            user,
+            currentChatId,
+            'assistant',
+            accumulatedContent,
+          )
+          setSavingMessages((prev) => {
+            const newSet = new Set(prev)
+            newSet.delete(messageId)
+            return newSet
+          })
+        } catch (error) {
+          console.error('Failed to save regenerated message:', error)
+          setSavingMessages((prev) => {
+            const newSet = new Set(prev)
+            newSet.delete(messageId)
+            return newSet
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Failed to regenerate message:', error)
+      alert('Failed to regenerate response. Please try again.')
+    } finally {
+      setRegeneratingMessageIndex(null)
+    }
+  }
+
   // Load chats when user logs in or out
   useEffect(() => {
     loadChats()
@@ -665,6 +784,8 @@ export default function Chat() {
           status={status}
           chatThreadRef={chatThreadRef}
           savingMessages={savingMessages}
+          onRegenerate={handleRegenerate}
+          regeneratingMessageIndex={regeneratingMessageIndex}
         />
 
         <div className="input-area">
