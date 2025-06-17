@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { ChevronDown } from 'lucide-react'
 
 const ModelSelector = ({
@@ -12,10 +12,39 @@ const ModelSelector = ({
   const [providers, setProviders] = useState({})
   const [loading, setLoading] = useState(true)
   const [showModels, setShowModels] = useState(false)
+  const containerRef = useRef(null)
 
   useEffect(() => {
     fetchProviders()
   }, [])
+
+  // Close modal when clicking outside or pressing Escape
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
+        setShowModels(false)
+      }
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setShowModels(false)
+      }
+    }
+
+    if (showModels) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleKeyDown)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showModels])
 
   // Callback ref that scrolls to selected model when rendered
   const scrollToSelected = useCallback((node) => {
@@ -54,7 +83,7 @@ const ModelSelector = ({
   }
 
   return (
-    <div className="model-selector-container">
+    <div className="model-selector-container" ref={containerRef}>
       <button
         type="button"
         onClick={(e) => {
