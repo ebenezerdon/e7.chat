@@ -222,7 +222,7 @@ const RegenerateDropdown = ({ onRegenerate, messageIndex, isRegenerating }) => {
                   <div className="regenerate-toggle-slider"></div>
                   <div className="regenerate-toggle-content">
                     <ExternalLink size={14} />
-                    <span>Open in new chat</span>
+                    <span>Branch to new chat</span>
                   </div>
                 </label>
               </div>
