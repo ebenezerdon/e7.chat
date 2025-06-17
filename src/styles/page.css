@@ -24,7 +24,7 @@
 }
 
 .api-key-indicator {
-  @apply flex items-center gap-1.5 px-2.5 py-1.5 bg-emerald-600/20 border border-emerald-500/30 rounded-md text-emerald-400 text-xs font-medium;
+  @apply flex items-center gap-1.5 px-2.5 py-2 bg-emerald-600/20 border border-emerald-500/30 rounded-md text-emerald-400 text-xs font-medium;
   font-size: 11px;
 }
 
