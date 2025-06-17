@@ -25,6 +25,49 @@
   @apply px-6 py-6 flex flex-col gap-4;
 }
 
+/* OAuth Buttons */
+.oauth-buttons {
+  @apply flex flex-col gap-3;
+}
+
+.oauth-button {
+  @apply w-full bg-gradient-to-r from-[#1a1e24] to-[#1e232a] border border-[#3a404b]/40 rounded-lg px-4 py-3 text-gray-300 text-sm font-medium cursor-pointer transition-all duration-200 hover:border-[#3a404b]/60 hover:bg-gradient-to-r hover:from-[#1e232a] hover:to-[#20252d] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3;
+}
+
+.oauth-button.google {
+  @apply hover:border-blue-500/30 hover:bg-gradient-to-r hover:from-blue-500/5 hover:to-blue-600/5;
+}
+
+.oauth-button.github {
+  @apply hover:border-gray-400/30 hover:bg-gradient-to-r hover:from-gray-500/5 hover:to-gray-600/5;
+}
+
+.oauth-loading {
+  @apply flex items-center gap-2;
+}
+
+.loading-spinner {
+  @apply w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin;
+}
+
+/* Auth Divider */
+.auth-divider {
+  @apply relative flex items-center justify-center text-gray-500 text-sm;
+}
+
+.auth-divider::before {
+  @apply content-[''] absolute left-0 top-1/2 w-full h-px bg-gradient-to-r from-transparent via-[#3a404b]/40 to-transparent;
+}
+
+.auth-divider span {
+  @apply bg-gradient-to-r from-[#1e232a] to-[#20252d] px-3;
+}
+
+/* Email Form Styles */
+.auth-email-form {
+  @apply flex flex-col gap-4;
+}
+
 .auth-field {
   @apply relative flex items-center;
 }

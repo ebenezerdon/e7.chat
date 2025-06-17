@@ -30,6 +30,42 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const loginWithGoogle = async () => {
+    try {
+      // Get the current origin for redirect URLs
+      const origin =
+        typeof window !== 'undefined'
+          ? window.location.origin
+          : 'http://localhost:3000'
+
+      await account.createOAuth2Session(
+        'google',
+        `${origin}/auth/success`, // Success redirect
+        `${origin}/auth/failure`, // Failure redirect
+      )
+    } catch (error) {
+      throw error
+    }
+  }
+
+  const loginWithGitHub = async () => {
+    try {
+      // Get the current origin for redirect URLs
+      const origin =
+        typeof window !== 'undefined'
+          ? window.location.origin
+          : 'http://localhost:3000'
+
+      await account.createOAuth2Session(
+        'github',
+        `${origin}/auth/success`, // Success redirect
+        `${origin}/auth/failure`, // Failure redirect
+      )
+    } catch (error) {
+      throw error
+    }
+  }
+
   const logout = async () => {
     try {
       await account.deleteSession('current')
@@ -58,6 +94,8 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     register,
+    loginWithGoogle,
+    loginWithGitHub,
     logout,
     loading,
   }
