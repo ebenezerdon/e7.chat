@@ -784,7 +784,7 @@
 
 /* Regenerate functionality styles */
 .message-actions {
-  @apply mt-3 flex justify-start;
+  @apply mt-3 flex justify-start gap-2;
 }
 
 .regenerate-container {
@@ -830,6 +830,39 @@
 
 .regenerate-dropdown-header {
   @apply px-4 py-3 border-b border-[#3a404b]/30 text-sm font-medium text-gray-200;
+}
+
+.regenerate-toggle-section {
+  @apply px-4 py-3 border-b border-[#3a404b]/30;
+}
+
+.regenerate-toggle {
+  @apply flex items-center gap-3 cursor-pointer;
+}
+
+.regenerate-checkbox {
+  @apply sr-only;
+}
+
+.regenerate-toggle-slider {
+  @apply relative w-11 h-6 bg-[#3a404b] rounded-full transition-colors duration-200;
+}
+
+.regenerate-checkbox:checked + .regenerate-toggle-slider {
+  @apply bg-blue-600;
+}
+
+.regenerate-toggle-slider::before {
+  @apply absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200;
+  content: '';
+}
+
+.regenerate-checkbox:checked + .regenerate-toggle-slider::before {
+  @apply transform translate-x-5;
+}
+
+.regenerate-toggle-content {
+  @apply flex items-center gap-2 text-sm text-gray-200;
 }
 
 .regenerate-dropdown .featured-models-section {
