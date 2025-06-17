@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       console.log('Success URL:', `${currentOrigin}/auth/success`)
       console.log('Failure URL:', `${currentOrigin}/auth/failure`)
 
-      await account.createOAuth2Session(
+      account.createOAuth2Session(
         'google',
         `${currentOrigin}/auth/success`, // Success redirect
         `${currentOrigin}/auth/failure`, // Failure redirect
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       console.log('GitHub Success URL:', `${currentOrigin}/auth/success`)
       console.log('GitHub Failure URL:', `${currentOrigin}/auth/failure`)
 
-      await account.createOAuth2Session(
+      account.createOAuth2Session(
         'github',
         `${currentOrigin}/auth/success`, // Success redirect
         `${currentOrigin}/auth/failure`, // Failure redirect
