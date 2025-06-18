@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { account } from './appwrite'
 
 const AuthContext = createContext({})
@@ -8,6 +9,7 @@ export const useAuth = () => useContext(AuthContext)
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   const login = async (email, password) => {
     try {
@@ -78,6 +80,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await account.deleteSession('current')
       setUser(null)
+      router.push('/')
     } catch (error) {
       console.error('Logout error:', error)
     }
