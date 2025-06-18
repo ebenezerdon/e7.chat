@@ -790,6 +790,8 @@ export default function Chat() {
             )
           }
           regeneratingMessageIndex={regeneratingMessageIndex}
+          hasApiKey={!!userApiKey}
+          onApiKeyRequired={openApiKeyModal}
         />
 
         <div className="input-area">

@@ -114,6 +114,17 @@ export const handleRegenerate = async (
     })
 
     if (!response.ok) {
+      // Handle API key restriction errors with better messaging
+      if (response.status === 403) {
+        try {
+          const errorData = await response.json()
+          if (errorData.requiresApiKey) {
+            throw new Error(errorData.error || 'This model requires an API key')
+          }
+        } catch (parseError) {
+          // If JSON parsing fails, fall through to generic error
+        }
+      }
       throw new Error('Failed to regenerate response')
     }
 
