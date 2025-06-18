@@ -119,6 +119,7 @@ const ModelSelector = ({
   const handleModelSelect = (modelId) => {
     // Allow gpt-4o-mini without API key, require API key for all other models
     if (!hasApiKey && modelId !== 'openai/gpt-4o-mini') {
+      setShowModels(false) // Close dropdown before opening API key modal
       if (onApiKeyRequired) {
         onApiKeyRequired()
       }

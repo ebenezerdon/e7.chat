@@ -171,6 +171,19 @@ export async function POST(req) {
     const { messages, model } = validateRequest(body, apiKey)
     const { settings = {} } = body
 
+    // Server-side API key restriction: only allow gpt-4o-mini without user API key
+    if (!userApiKey && model !== 'openai/gpt-4o-mini') {
+      return Response.json(
+        {
+          error:
+            'This model requires your own OpenRouter API key. Please add your API key or use GPT-4o Mini.',
+          requiresApiKey: true,
+          allowedModel: 'openai/gpt-4o-mini',
+        },
+        { status: 403 },
+      )
+    }
+
     // Create provider with the appropriate API key
     const openrouter = createOpenRouterProvider(apiKey)
 

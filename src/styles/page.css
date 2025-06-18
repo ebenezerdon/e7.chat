@@ -1131,6 +1131,20 @@
   @apply text-xs text-gray-400 leading-relaxed;
 }
 
+/* Restricted model styles for regenerate dropdown */
+.regenerate-dropdown .model-item.requires-api-key {
+  @apply opacity-60 cursor-pointer;
+}
+
+.regenerate-dropdown .model-item.requires-api-key:hover {
+  @apply opacity-80 bg-amber-600/10;
+}
+
+.regenerate-dropdown .model-item.requires-api-key .model-title::after {
+  content: ' 🔒';
+  @apply text-amber-400 text-xs;
+}
+
 /* Mobile adjustments for regenerate */
 @media (max-width: 640px) {
   .regenerate-dropdown {

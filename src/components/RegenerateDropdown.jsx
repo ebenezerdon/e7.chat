@@ -8,7 +8,13 @@ import {
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
-const RegenerateDropdown = ({ onRegenerate, messageIndex, isRegenerating }) => {
+const RegenerateDropdown = ({
+  onRegenerate,
+  messageIndex,
+  isRegenerating,
+  hasApiKey = false,
+  onApiKeyRequired,
+}) => {
   const [showDropdown, setShowDropdown] = useState(false)
   const [availableModels, setAvailableModels] = useState({})
   const [loadingModels, setLoadingModels] = useState(true)
@@ -113,6 +119,15 @@ const RegenerateDropdown = ({ onRegenerate, messageIndex, isRegenerating }) => {
   }
 
   const handleRegenerateWithModel = (modelId) => {
+    // Allow gpt-4o-mini without API key, require API key for all other models
+    if (!hasApiKey && modelId !== 'openai/gpt-4o-mini') {
+      setShowDropdown(false) // Close dropdown before opening API key modal
+      if (onApiKeyRequired) {
+        onApiKeyRequired()
+      }
+      return
+    }
+
     if (onRegenerate && messageIndex !== undefined) {
       onRegenerate(messageIndex, modelId, createNewChat)
       setShowDropdown(false)
@@ -238,7 +253,16 @@ const RegenerateDropdown = ({ onRegenerate, messageIndex, isRegenerating }) => {
                     <button
                       key={model.id}
                       onClick={() => handleRegenerateWithModel(model.id)}
-                      className="model-item featured"
+                      className={`model-item featured ${
+                        !hasApiKey && model.id !== 'openai/gpt-4o-mini'
+                          ? 'requires-api-key'
+                          : ''
+                      }`}
+                      title={
+                        !hasApiKey && model.id !== 'openai/gpt-4o-mini'
+                          ? 'Requires API key - Click to add your OpenRouter API key'
+                          : `${model.name} - ${model.pricing}`
+                      }
                     >
                       <div className="model-info">
                         <div className="model-header">
@@ -266,7 +290,16 @@ const RegenerateDropdown = ({ onRegenerate, messageIndex, isRegenerating }) => {
                           <button
                             key={modelId}
                             onClick={() => handleRegenerateWithModel(modelId)}
-                            className="model-item"
+                            className={`model-item ${
+                              !hasApiKey && modelId !== 'openai/gpt-4o-mini'
+                                ? 'requires-api-key'
+                                : ''
+                            }`}
+                            title={
+                              !hasApiKey && modelId !== 'openai/gpt-4o-mini'
+                                ? 'Requires API key - Click to add your OpenRouter API key'
+                                : `${model.name} - ${model.pricing}`
+                            }
                           >
                             <div className="model-info">
                               <div className="model-header">

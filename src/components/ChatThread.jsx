@@ -17,6 +17,8 @@ const Message = ({
   messageIndex,
   isRegenerating,
   model,
+  hasApiKey,
+  onApiKeyRequired,
 }) => {
   const [downloadState, setDownloadState] = useState('idle') // idle, downloading, success
   const [downloadProgress, setDownloadProgress] = useState(0)
@@ -355,6 +357,8 @@ const Message = ({
               onRegenerate={onRegenerate}
               messageIndex={messageIndex}
               isRegenerating={isRegenerating}
+              hasApiKey={hasApiKey}
+              onApiKeyRequired={onApiKeyRequired}
             />
           )}
         </div>
@@ -370,6 +374,8 @@ const ChatThread = ({
   savingMessages = new Set(),
   onRegenerate,
   regeneratingMessageIndex,
+  hasApiKey = false,
+  onApiKeyRequired,
 }) => {
   const welcomeMessage = {
     role: 'assistant',
@@ -389,6 +395,8 @@ const ChatThread = ({
             isSaving={savingMessages.has(message.id || index)}
             onRegenerate={onRegenerate}
             isRegenerating={regeneratingMessageIndex === index}
+            hasApiKey={hasApiKey}
+            onApiKeyRequired={onApiKeyRequired}
           />
         ))
       )}
