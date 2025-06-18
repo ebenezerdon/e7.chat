@@ -617,14 +617,14 @@ export default function Chat() {
       // Refresh the chats list
       await loadChats()
 
-      // Navigate to first available chat or home
+      // Navigate to first available chat or create new one if none exist
       const updatedChats = await getChatsCostOptimized(user)
       if (updatedChats.length > 0) {
         router.push(`/?chatId=${updatedChats[0].$id}`)
         setCurrentChatId(updatedChats[0].$id)
       } else {
-        router.push('/')
-        setCurrentChatId(null)
+        // No chats left, create a new one
+        initializeNewChat()
       }
     } catch (error) {
       console.error('Failed to delete chat:', error)
@@ -632,7 +632,7 @@ export default function Chat() {
         'Failed to delete chat. Please check your connection and try again.',
       )
     }
-  }, [currentChatId, user, router, loadChats])
+  }, [currentChatId, user, router, loadChats, initializeNewChat])
 
   const handleDeleteChatFromSidebar = useCallback(
     async (chatId) => {
@@ -644,15 +644,15 @@ export default function Chat() {
         // Refresh the chats list
         await loadChats()
 
-        // If the deleted chat was the current one, navigate to first available chat or home
+        // If the deleted chat was the current one, navigate to first available chat or create new one if none exist
         if (chatId === currentChatId) {
           const updatedChats = await getChatsCostOptimized(user)
           if (updatedChats.length > 0) {
             router.push(`/?chatId=${updatedChats[0].$id}`)
             setCurrentChatId(updatedChats[0].$id)
           } else {
-            router.push('/')
-            setCurrentChatId(null)
+            // No chats left, create a new one
+            initializeNewChat()
           }
         }
       } catch (error) {
@@ -662,7 +662,7 @@ export default function Chat() {
         )
       }
     },
-    [user, router, loadChats, currentChatId],
+    [user, router, loadChats, currentChatId, initializeNewChat],
   )
 
   const handleRenameChat = useCallback(
