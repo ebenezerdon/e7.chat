@@ -38,7 +38,7 @@ import ApiKeyModal from '@/components/ApiKeyModal'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { detectImageRequest } from '../utils/imageDetection'
 import { generateVersionedTitle } from '../utils/chatHelpers'
-import { decrypt } from '../utils/encryption'
+import { useApiKeys } from '../hooks/useApiKeys'
 
 export default function Chat() {
   const router = useRouter()
@@ -54,8 +54,10 @@ export default function Chat() {
   const [currentChat, setCurrentChat] = useState(null)
   const [chatsLoading, setChatsLoading] = useState(true)
   const [savingMessages, setSavingMessages] = useState(new Set())
-  const [userApiKey, setUserApiKey] = useState(null) // OpenRouter API key
-  const [userOpenAiKey, setUserOpenAiKey] = useState(null) // OpenAI API key
+
+  // API keys management
+  const { userApiKey, userOpenAiKey, setUserApiKey, setUserOpenAiKey } =
+    useApiKeys(user)
 
   // File attachments state
   const [attachedFiles, setAttachedFiles] = useState(null)
@@ -1010,73 +1012,6 @@ export default function Chat() {
       setSelectedModel('openai/gpt-4o-mini')
     }
   }, [userApiKey, selectedModel, userPreferences.lastUsedModel])
-
-  // Load user's API keys on component mount and sync with cloud
-  useEffect(() => {
-    const loadApiKeys = async () => {
-      if (user) {
-        // User is logged in - check cloud first, then local for both providers
-        try {
-          const { Query } = await import('appwrite')
-
-          // Load OpenRouter key
-          const openrouterDocs = await databases.listDocuments(
-            DATABASE_ID,
-            'api_keys',
-            [
-              Query.equal('userId', user.$id),
-              Query.equal('provider', 'openrouter'),
-            ],
-          )
-
-          if (openrouterDocs.total > 0) {
-            const keyDoc = openrouterDocs.documents[0]
-            const decryptedKey = decrypt(keyDoc.encryptedKey, user.$id)
-            setUserApiKey(decryptedKey)
-          } else {
-            // No cloud key found, check localStorage
-            const savedKey = localStorage.getItem('userOpenRouterApiKey')
-            setUserApiKey(savedKey || null)
-          }
-
-          // Load OpenAI key
-          const openaiDocs = await databases.listDocuments(
-            DATABASE_ID,
-            'api_keys',
-            [
-              Query.equal('userId', user.$id),
-              Query.equal('provider', 'openai'),
-            ],
-          )
-
-          if (openaiDocs.total > 0) {
-            const keyDoc = openaiDocs.documents[0]
-            const decryptedKey = decrypt(keyDoc.encryptedKey, user.$id)
-            setUserOpenAiKey(decryptedKey)
-          } else {
-            // No cloud key found, check localStorage
-            const savedKey = localStorage.getItem('userOpenAiApiKey')
-            setUserOpenAiKey(savedKey || null)
-          }
-        } catch (error) {
-          console.error('Failed to load cloud API keys:', error)
-          // Fallback to localStorage on error
-          const openrouterKey = localStorage.getItem('userOpenRouterApiKey')
-          const openaiKey = localStorage.getItem('userOpenAiApiKey')
-          setUserApiKey(openrouterKey || null)
-          setUserOpenAiKey(openaiKey || null)
-        }
-      } else {
-        // Guest mode - only check localStorage
-        const openrouterKey = localStorage.getItem('userOpenRouterApiKey')
-        const openaiKey = localStorage.getItem('userOpenAiApiKey')
-        setUserApiKey(openrouterKey || null)
-        setUserOpenAiKey(openaiKey || null)
-      }
-    }
-
-    loadApiKeys()
-  }, [user])
 
   if (authLoading || chatsLoading) {
     return <div className="loading-state"></div>
