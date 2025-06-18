@@ -57,6 +57,9 @@ export default function Chat() {
   const chatThreadRef = useRef(null)
   const { user, loading: authLoading } = useAuth()
 
+  // Add flag to prevent concurrent chat creation
+  const initializingChatRef = useRef(false)
+
   // Chat state management
   const {
     currentChatId,
@@ -177,7 +180,15 @@ export default function Chat() {
         return
       }
 
+      // Prevent concurrent chat creation
+      if (initializingChatRef.current) {
+        console.log('Chat initialization already in progress, skipping...')
+        return
+      }
+
       try {
+        initializingChatRef.current = true
+
         // If forceCreate is true (e.g., user explicitly clicked "New Chat"), skip reuse logic
         if (!forceCreate) {
           // 1) Try to find an existing unused "New Chat" first (both in current state and freshly fetched)
@@ -300,6 +311,8 @@ export default function Chat() {
         }
 
         alert('Failed to create new chat. Please try again.')
+      } finally {
+        initializingChatRef.current = false
       }
     },
     [user, router, chatsData, setMessages, getChatsCostOptimized],
