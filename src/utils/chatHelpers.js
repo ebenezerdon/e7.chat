@@ -1,3 +1,5 @@
+import { updateChatTitle } from '../lib/db'
+
 /**
  * Generates a versioned title for branched chats
  * @param {string} originalTitle - The original chat title
@@ -17,5 +19,56 @@ export const generateVersionedTitle = (originalTitle) => {
   } else {
     // No version yet, add [2] to the beginning
     return `[2] ${originalTitle}`
+  }
+}
+
+/**
+ * Generates a title for a chat based on the first message
+ * @param {string} message - The first message content
+ * @param {string} userApiKey - User's API key
+ * @param {Object} user - User object
+ * @param {string} currentChatId - Current chat ID
+ * @param {Function} updateChatTitle - Function to update chat title
+ * @param {Function} setCurrentChat - Function to set current chat
+ * @param {Function} setChatsData - Function to set chats data
+ * @returns {Promise<void>}
+ */
+export const generateTitle = async (
+  message,
+  userApiKey,
+  user,
+  currentChatId,
+  updateChatTitle,
+  setCurrentChat,
+  setChatsData,
+) => {
+  try {
+    const response = await fetch('/api/generate-title', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(userApiKey && { 'X-User-API-Key': userApiKey }),
+      },
+      body: JSON.stringify({ message }),
+    })
+
+    if (!response.ok) throw new Error('Failed to generate title')
+
+    const { title } = await response.json()
+    if (title && currentChatId) {
+      await updateChatTitle(user, currentChatId, title)
+
+      // Update local state to reflect the new title immediately
+      setCurrentChat((prev) => (prev ? { ...prev, title } : null))
+
+      // Also update the chats list to show the new title in sidebar
+      setChatsData((prev) =>
+        prev.map((chat) =>
+          chat.$id === currentChatId ? { ...chat, title } : chat,
+        ),
+      )
+    }
+  } catch (error) {
+    console.error('Error generating title', error)
   }
 }
