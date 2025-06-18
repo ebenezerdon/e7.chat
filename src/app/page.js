@@ -35,7 +35,8 @@ import ShareModal from '@/components/ShareModal'
 import ApiKeyModal from '@/components/ApiKeyModal'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { detectImageRequest } from '../utils/imageDetection'
-import { generateVersionedTitle } from '../utils/chatHelpers'
+import { generateVersionedTitle, generateTitle } from '../utils/chatHelpers'
+import { handleImageGeneration } from '../utils/imageHandlers'
 import { useApiKeys } from '../hooks/useApiKeys'
 import { useUserPreferences } from '../hooks/useUserPreferences'
 import { useModals } from '../hooks/useModals'
@@ -317,161 +318,6 @@ export default function Chat() {
     [user, router, chatsData, setMessages, getChatsCostOptimized],
   )
 
-  const generateTitle = async (message) => {
-    try {
-      const response = await fetch('/api/generate-title', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(userApiKey && { 'X-User-API-Key': userApiKey }),
-        },
-        body: JSON.stringify({ message }),
-      })
-
-      if (!response.ok) throw new Error('Failed to generate title')
-
-      const { title } = await response.json()
-      if (title && currentChatId) {
-        await updateChatTitle(user, currentChatId, title)
-
-        // Update local state to reflect the new title immediately
-        setCurrentChat((prev) => (prev ? { ...prev, title } : null))
-
-        // Also update the chats list to show the new title in sidebar
-        setChatsData((prev) =>
-          prev.map((chat) =>
-            chat.$id === currentChatId ? { ...chat, title } : chat,
-          ),
-        )
-      }
-    } catch (error) {
-      console.error('Error generating title', error)
-    }
-  }
-
-  const handleImageGeneration = async (prompt, originalMessage) => {
-    if (!user || !currentChatId) {
-      openAuthModal()
-      return
-    }
-
-    try {
-      console.log('Generating image for prompt:', prompt)
-      console.log(
-        'Using OpenAI API key:',
-        userOpenAiKey ? 'User key present' : 'No user key',
-      )
-      console.log(
-        'User object:',
-        user ? { id: user.$id, email: user.email } : 'No user',
-      )
-
-      // Add user message to chat immediately
-      const userMessage = {
-        id: `user-${Date.now()}`,
-        role: 'user',
-        content: originalMessage,
-        type: 'image-request',
-      }
-
-      // Add a loading message for the assistant
-      const loadingMessage = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: 'Generating image...',
-        type: 'image-generating',
-        imagePrompt: prompt,
-      }
-
-      setMessages((prev) => [...prev, userMessage, loadingMessage])
-
-      // Save user message to database
-      await saveMessage(
-        user,
-        currentChatId,
-        userMessage.role,
-        userMessage.content,
-      )
-
-      // Generate image
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(userOpenAiKey && { 'X-User-API-Key': userOpenAiKey }),
-          ...(user && { 'X-User-ID': user.$id }),
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          size: '1024x1024',
-          quality: 'auto',
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate image')
-      }
-
-      const imageData = {
-        url: data.imageUrl,
-        prompt: prompt,
-        revisedPrompt: data.revisedPrompt,
-        timestamp: new Date().toISOString(),
-      }
-
-      // Replace loading message with actual image
-      const assistantMessage = {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: `I've generated an image based on your request: "${prompt}"`,
-        type: 'image-response',
-        imageData: imageData,
-      }
-
-      setMessages((prev) => {
-        const newMessages = [...prev]
-        // Replace the loading message with the actual result
-        newMessages[newMessages.length - 1] = assistantMessage
-        return newMessages
-      })
-
-      // Save assistant message with image data to database
-      const assistantMessageData = {
-        content: assistantMessage.content,
-        type: assistantMessage.type,
-        imageData: assistantMessage.imageData,
-      }
-
-      await saveMessage(
-        user,
-        currentChatId,
-        assistantMessage.role,
-        JSON.stringify(assistantMessageData),
-      )
-
-      // Generate title if this is the first interaction
-      if (messages.length === 0) {
-        await generateTitle(originalMessage)
-      }
-    } catch (error) {
-      console.error('Image generation failed:', error)
-
-      // Replace loading message with error message
-      setMessages((prev) => {
-        const newMessages = [...prev]
-        newMessages[newMessages.length - 1] = {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          content: `Sorry, I couldn't generate the image. Error: ${error.message}`,
-          type: 'error',
-        }
-        return newMessages
-      })
-    }
-  }
-
   const loadCurrentChat = useCallback(async () => {
     if (!user || !currentChatId) {
       setCurrentChat(null)
@@ -543,7 +389,20 @@ export default function Chat() {
         // Clear input immediately for better UX
         setInput('')
         // Handle image generation
-        await handleImageGeneration(imagePrompt, input)
+        await handleImageGeneration(
+          imagePrompt,
+          input,
+          user,
+          currentChatId,
+          userOpenAiKey,
+          messages,
+          setMessages,
+          userApiKey,
+          updateChatTitle,
+          setCurrentChat,
+          setChatsData,
+          openAuthModal,
+        )
         return
       }
 
@@ -580,7 +439,15 @@ export default function Chat() {
         })
 
         if (isFirstMessage) {
-          generateTitle(input)
+          generateTitle(
+            input,
+            userApiKey,
+            user,
+            currentChatId,
+            updateChatTitle,
+            setCurrentChat,
+            setChatsData,
+          )
         }
       } catch (error) {
         setSavingMessages((prev) => {
