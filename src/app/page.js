@@ -40,9 +40,11 @@ import {
   generateTitle,
   loadChats,
   loadCurrentChat,
+  findUnusedNewChat,
 } from '../utils/chatHelpers'
 import { handleImageGeneration } from '../utils/imageHandlers'
 import { handleRegenerate } from '../utils/regenerateHandlers'
+import { loadChatMessages } from '../utils/messageHandlers'
 import { useApiKeys } from '../hooks/useApiKeys'
 import { useUserPreferences } from '../hooks/useUserPreferences'
 import { useModals } from '../hooks/useModals'
@@ -179,12 +181,6 @@ export default function Chat() {
         // If forceCreate is true (e.g., user explicitly clicked "New Chat"), skip reuse logic
         if (!forceCreate) {
           // 1) Try to find an existing unused "New Chat" first (both in current state and freshly fetched)
-          const findUnusedNewChat = (chats) =>
-            chats?.find(
-              (chat) =>
-                chat.title === 'New Chat' &&
-                (chat.messageCount === 0 || chat.messageCount === undefined),
-            )
 
           // Check the local state first
           let reusableChat = findUnusedNewChat(chatsData)
@@ -493,53 +489,7 @@ export default function Chat() {
 
   // Load messages when currentChatId changes
   useEffect(() => {
-    const loadChatMessages = async () => {
-      if (!user || !currentChatId) {
-        setMessages([])
-        return
-      }
-
-      // Don't try to load messages for optimistic chats
-      if (currentChatId.startsWith('temp-')) {
-        setMessages([])
-        return
-      }
-
-      try {
-        const loadedMessages = await getChatMessages(user, currentChatId)
-
-        // Parse image messages that were stored as JSON
-        const parsedMessages = loadedMessages.map((message) => {
-          if (
-            message.role === 'assistant' &&
-            typeof message.content === 'string' &&
-            message.content.startsWith('{')
-          ) {
-            try {
-              const parsed = JSON.parse(message.content)
-              if (parsed.type && parsed.imageData) {
-                return {
-                  ...message,
-                  content: parsed.content,
-                  type: parsed.type,
-                  imageData: parsed.imageData,
-                }
-              }
-            } catch (e) {
-              console.log('Failed to parse message as JSON:', e)
-            }
-          }
-          return message
-        })
-
-        setMessages(parsedMessages)
-      } catch (error) {
-        console.error('Failed to load messages', error)
-        setMessages([])
-      }
-    }
-
-    loadChatMessages()
+    loadChatMessages(user, currentChatId, setMessages)
   }, [user, currentChatId, setMessages])
 
   // Auto-scroll to bottom when messages change
