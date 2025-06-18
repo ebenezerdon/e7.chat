@@ -36,6 +36,9 @@ import AttachmentCount from '@/components/AttachmentCount'
 import ShareModal from '@/components/ShareModal'
 import ApiKeyModal from '@/components/ApiKeyModal'
 import ConfirmationModal from '@/components/ConfirmationModal'
+import { detectImageRequest } from '../utils/imageDetection'
+import { generateVersionedTitle } from '../utils/chatHelpers'
+import { decrypt } from '../utils/encryption'
 
 export default function Chat() {
   const router = useRouter()
@@ -324,55 +327,6 @@ export default function Chat() {
     } catch (error) {
       console.error('Error generating title', error)
     }
-  }
-
-  const detectImageRequest = (message) => {
-    const lowerMessage = message.toLowerCase().trim()
-
-    // Keywords that trigger image generation
-    const imageKeywords = [
-      'generate image',
-      'generate an image',
-      'create image',
-      'create an image',
-      'make image',
-      'make an image',
-      'draw image',
-      'draw an image',
-      'generate picture',
-      'create picture',
-      'make picture',
-      'draw picture',
-      'image of',
-      'picture of',
-      'show me image',
-      'show me picture',
-      'visualize',
-      'illustrate',
-    ]
-
-    // Check if message starts with any image keywords
-    for (const keyword of imageKeywords) {
-      if (lowerMessage.startsWith(keyword)) {
-        // Extract the prompt (everything after the keyword)
-        const prompt = message.substring(keyword.length).trim()
-        // Remove common connecting words at the beginning
-        const cleanedPrompt = prompt
-          .replace(/^(of|for|:|about|showing|with)\s*/i, '')
-          .trim()
-        return cleanedPrompt || prompt
-      }
-    }
-
-    // Check if message contains "generate/create/make/draw + image/picture" with optional adjectives
-    const containsPattern =
-      /\b(generate|create|make|draw|show me)\s+(an?\s+)?([a-z\s]*\s+)?(image|picture|photo)\s+(of|for|showing|with)?\s*(.+)/i
-    const match = lowerMessage.match(containsPattern)
-    if (match && match[6]) {
-      return match[6].trim()
-    }
-
-    return null
   }
 
   const handleImageGeneration = async (prompt, originalMessage) => {
@@ -745,23 +699,6 @@ export default function Chat() {
       // If creating new chat, handle branching
       if (createNewChat) {
         // Generate versioned title for the branched chat
-        const generateVersionedTitle = (originalTitle) => {
-          if (!originalTitle) return '[2] New Chat'
-
-          // Check if title already has a version number in square brackets at the start
-          const versionMatch = originalTitle.match(/^\[(\d+)\]\s*(.+)$/)
-
-          if (versionMatch) {
-            // Title already has a version, increment it
-            const currentVersion = parseInt(versionMatch[1])
-            const titleWithoutVersion = versionMatch[2]
-            return `[${currentVersion + 1}] ${titleWithoutVersion}`
-          } else {
-            // No version yet, add [2] to the beginning
-            return `[2] ${originalTitle}`
-          }
-        }
-
         const branchedTitle = generateVersionedTitle(
           currentChat?.title || 'New Chat',
         )
@@ -1077,17 +1014,6 @@ export default function Chat() {
   // Load user's API keys on component mount and sync with cloud
   useEffect(() => {
     const loadApiKeys = async () => {
-      // Simple decrypt function (same as in ApiKeyModal)
-      const decrypt = (encryptedText, key) => {
-        const keyBuffer = Buffer.from(key, 'utf8')
-        const encryptedBuffer = Buffer.from(encryptedText, 'base64')
-        const decrypted = Buffer.alloc(encryptedBuffer.length)
-        for (let i = 0; i < encryptedBuffer.length; i++) {
-          decrypted[i] = encryptedBuffer[i] ^ keyBuffer[i % keyBuffer.length]
-        }
-        return decrypted.toString('utf8')
-      }
-
       if (user) {
         // User is logged in - check cloud first, then local for both providers
         try {
