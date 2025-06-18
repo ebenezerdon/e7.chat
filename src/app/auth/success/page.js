@@ -13,7 +13,9 @@ export default function AuthSuccess() {
         // Check if user is authenticated
         const user = await account.get()
         if (user) {
-          // Redirect to home page on successful authentication
+          // Small delay to allow auth context to update before navigation
+          // This prevents race condition where page loads before auth state is ready
+          await new Promise((resolve) => setTimeout(resolve, 100))
           router.push('/')
         } else {
           // If no user found, redirect to home with error

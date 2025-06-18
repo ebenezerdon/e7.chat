@@ -22,17 +22,23 @@ export const createChatHandlers = ({
     try {
       await deleteChat(user, currentChatId)
 
-      // Refresh the chats list
-      await loadChats()
-
-      // Navigate to first available chat or create new one if none exist
+      // Get fresh chats data after deletion
       const updatedChats = await getChatsCostOptimized(user)
+
+      // Update local state immediately with fresh data
+      setChatsData(updatedChats)
+
       if (updatedChats.length > 0) {
+        // Navigate to first available chat
         router.push(`/?chatId=${updatedChats[0].$id}`)
         setCurrentChatId(updatedChats[0].$id)
       } else {
-        // No chats left, create a new one
-        initializeNewChat()
+        // No chats left, clear current state and create new chat
+        setCurrentChatId(null)
+        setCurrentChat(null)
+        // Set empty chats array since we know there are no chats
+        setChatsData([])
+        await initializeNewChat(true) // Force create, skip reuse logic
       }
     } catch (error) {
       console.error('Failed to delete chat:', error)
@@ -48,18 +54,24 @@ export const createChatHandlers = ({
     try {
       await deleteChat(user, chatId)
 
-      // Refresh the chats list
-      await loadChats()
+      // Get fresh chats data after deletion
+      const updatedChats = await getChatsCostOptimized(user)
+
+      // Update local state immediately with fresh data
+      setChatsData(updatedChats)
 
       // If the deleted chat was the current one, navigate to first available chat or create new one if none exist
       if (chatId === currentChatId) {
-        const updatedChats = await getChatsCostOptimized(user)
         if (updatedChats.length > 0) {
           router.push(`/?chatId=${updatedChats[0].$id}`)
           setCurrentChatId(updatedChats[0].$id)
         } else {
-          // No chats left, create a new one
-          initializeNewChat()
+          // No chats left, clear current state and create new chat
+          setCurrentChatId(null)
+          setCurrentChat(null)
+          // Set empty chats array since we know there are no chats
+          setChatsData([])
+          await initializeNewChat(true) // Force create, skip reuse logic
         }
       }
     } catch (error) {
