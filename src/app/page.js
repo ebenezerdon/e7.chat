@@ -38,48 +38,66 @@ import { detectImageRequest } from '../utils/imageDetection'
 import { generateVersionedTitle } from '../utils/chatHelpers'
 import { useApiKeys } from '../hooks/useApiKeys'
 import { useUserPreferences } from '../hooks/useUserPreferences'
+import { useModals } from '../hooks/useModals'
+import { useChatState } from '../hooks/useChatState'
+import { useModelSelection } from '../hooks/useModelSelection'
 
 export default function Chat() {
   const router = useRouter()
   const chatThreadRef = useRef(null)
   const { user, loading: authLoading } = useAuth()
 
-  const [currentChatId, setCurrentChatId] = useState(null)
-  const [showAuthModal, setShowAuthModal] = useState(false)
-  const [showShareModal, setShowShareModal] = useState(false)
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [chatsData, setChatsData] = useState([])
-  const [currentChat, setCurrentChat] = useState(null)
-  const [chatsLoading, setChatsLoading] = useState(true)
-  const [savingMessages, setSavingMessages] = useState(new Set())
+  // Chat state management
+  const {
+    currentChatId,
+    setCurrentChatId,
+    chatsData,
+    setChatsData,
+    updateChatsData,
+    currentChat,
+    setCurrentChat,
+    updateCurrentChat,
+    chatsLoading,
+    setChatsLoading,
+    savingMessages,
+    setSavingMessages,
+    updateSavingMessages,
+    regeneratingMessageIndex,
+    setRegeneratingMessageIndex,
+  } = useChatState()
+
+  // Modal management
+  const {
+    showAuthModal,
+    showShareModal,
+    showApiKeyModal,
+    showDeleteConfirm,
+    openAuthModal,
+    closeAuthModal,
+    openShareModal,
+    closeShareModal,
+    openApiKeyModal,
+    closeApiKeyModal,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+  } = useModals()
 
   // API keys management
   const { userApiKey, userOpenAiKey, setUserApiKey, setUserOpenAiKey } =
     useApiKeys(user)
 
-  // File attachments state
-  const [attachedFiles, setAttachedFiles] = useState(null)
-
   // User preferences management
   const { userPreferences, savePreference } = useUserPreferences(user, account)
 
-  // Function to get smart default model based on preferences and API key
-  const getDefaultModel = () => {
-    // Priority: saved preference > API key based default > fallback
-    if (userPreferences.lastUsedModel) {
-      return userPreferences.lastUsedModel
-    }
-    return userApiKey ? 'openai/gpt-4o' : 'openai/gpt-4o-mini'
-  }
-
-  // LLM model selection state (simplified for OpenRouter)
-  const [selectedModel, setSelectedModel] = useState(
-    userApiKey ? 'openai/gpt-4o' : 'openai/gpt-4o-mini',
-  )
-
-  // Regenerate state
-  const [regeneratingMessageIndex, setRegeneratingMessageIndex] = useState(null)
+  // Model selection and file attachments
+  const {
+    selectedModel,
+    setSelectedModel,
+    attachedFiles,
+    setAttachedFiles,
+    handleModelChange,
+    getDefaultModel,
+  } = useModelSelection(userApiKey, userPreferences, savePreference, user)
 
   const {
     messages,
@@ -160,7 +178,7 @@ export default function Chat() {
   const initializeNewChat = useCallback(
     async (forceCreate = false) => {
       if (!user) {
-        setShowAuthModal(true)
+        openAuthModal()
         return
       }
 
@@ -332,7 +350,7 @@ export default function Chat() {
 
   const handleImageGeneration = async (prompt, originalMessage) => {
     if (!user || !currentChatId) {
-      setShowAuthModal(true)
+      openAuthModal()
       return
     }
 
@@ -479,7 +497,7 @@ export default function Chat() {
     if (!input.trim()) return
 
     if (!user) {
-      setShowAuthModal(true)
+      openAuthModal()
       return
     }
 
@@ -560,8 +578,8 @@ export default function Chat() {
 
   const handleDeleteChat = useCallback(() => {
     if (!currentChatId || !user) return
-    setShowDeleteConfirm(true)
-  }, [currentChatId, user])
+    openDeleteConfirm()
+  }, [currentChatId, user, openDeleteConfirm])
 
   const handleConfirmDelete = useCallback(async () => {
     if (!currentChatId || !user) return
@@ -654,21 +672,6 @@ export default function Chat() {
   const handleChatSelect = (chatId) => {
     setCurrentChatId(chatId)
     router.push(`/?chatId=${chatId}`)
-  }
-
-  // Handle model selection with preference saving
-  const handleModelChange = async (newModel) => {
-    setSelectedModel(newModel)
-
-    // Save user preference if user is logged in
-    if (user) {
-      try {
-        await savePreference('lastUsedModel', newModel)
-      } catch (error) {
-        console.error('Failed to save model preference:', error)
-        // Continue anyway - don't block user from using the model
-      }
-    }
   }
 
   const handleRegenerate = async (
@@ -859,13 +862,6 @@ export default function Chat() {
     }
   }
 
-  // Update selected model when preferences change
-  useEffect(() => {
-    if (userPreferences.lastUsedModel) {
-      setSelectedModel(userPreferences.lastUsedModel)
-    }
-  }, [userPreferences.lastUsedModel])
-
   // Load chats when user logs in or out
   useEffect(() => {
     loadChats()
@@ -977,20 +973,6 @@ export default function Chat() {
     }
   }, [messages, currentChatId])
 
-  // Update default model when API key status changes (only if no saved preference)
-  useEffect(() => {
-    // Don't override if user has a saved preference
-    if (userPreferences.lastUsedModel) return
-
-    // Only update if user doesn't have a manually selected model preference
-    if (userApiKey && selectedModel === 'openai/gpt-4o-mini') {
-      setSelectedModel('openai/gpt-4o')
-    } else if (!userApiKey && selectedModel !== 'openai/gpt-4o-mini') {
-      // When API key is removed, fall back to free tier model
-      setSelectedModel('openai/gpt-4o-mini')
-    }
-  }, [userApiKey, selectedModel, userPreferences.lastUsedModel])
-
   if (authLoading || chatsLoading) {
     return <div className="loading-state"></div>
   }
@@ -1012,7 +994,7 @@ export default function Chat() {
             <div className="auth-controls">
               {user && userApiKey && (
                 <button
-                  onClick={() => setShowApiKeyModal(true)}
+                  onClick={openApiKeyModal}
                   className="api-key-indicator"
                   style={{
                     cursor: 'pointer',
@@ -1045,7 +1027,7 @@ export default function Chat() {
               )}
               {user && !userApiKey && (
                 <button
-                  onClick={() => setShowApiKeyModal(true)}
+                  onClick={openApiKeyModal}
                   className="api-key-indicator"
                   style={{
                     borderColor: '#f59e0b',
@@ -1071,7 +1053,7 @@ export default function Chat() {
                 !currentChatId.startsWith('temp-') &&
                 messages.length > 0 && (
                   <button
-                    onClick={() => setShowShareModal(true)}
+                    onClick={openShareModal}
                     className="share-button-small"
                     aria-label="Share chat"
                   >
@@ -1082,7 +1064,7 @@ export default function Chat() {
                 <UserMenu />
               ) : (
                 <button
-                  onClick={() => setShowAuthModal(true)}
+                  onClick={openAuthModal}
                   className="auth-button"
                   aria-label="Sign in"
                 >
@@ -1162,7 +1144,7 @@ export default function Chat() {
           <div className="auth-controls">
             {user && userApiKey && (
               <button
-                onClick={() => setShowApiKeyModal(true)}
+                onClick={openApiKeyModal}
                 className="api-key-indicator"
                 style={{
                   cursor: 'pointer',
@@ -1195,7 +1177,7 @@ export default function Chat() {
             )}
             {user && !userApiKey && (
               <button
-                onClick={() => setShowApiKeyModal(true)}
+                onClick={openApiKeyModal}
                 className="api-key-indicator"
                 style={{
                   borderColor: '#f59e0b',
@@ -1221,7 +1203,7 @@ export default function Chat() {
               !currentChatId.startsWith('temp-') &&
               messages.length > 0 && (
                 <button
-                  onClick={() => setShowShareModal(true)}
+                  onClick={openShareModal}
                   className="share-button-small"
                   aria-label="Share chat"
                 >
@@ -1232,7 +1214,7 @@ export default function Chat() {
               <UserMenu />
             ) : (
               <button
-                onClick={() => setShowAuthModal(true)}
+                onClick={openAuthModal}
                 className="auth-button"
                 aria-label="Sign in"
               >
@@ -1272,7 +1254,7 @@ export default function Chat() {
                   selectedModel={selectedModel}
                   onModelChange={handleModelChange}
                   hasApiKey={!!userApiKey}
-                  onApiKeyRequired={() => setShowApiKeyModal(true)}
+                  onApiKeyRequired={openApiKeyModal}
                 />
               </div>
 
@@ -1320,28 +1302,25 @@ export default function Chat() {
                 selectedModel={selectedModel}
                 onModelChange={handleModelChange}
                 hasApiKey={!!userApiKey}
-                onApiKeyRequired={() => setShowApiKeyModal(true)}
+                onApiKeyRequired={openApiKeyModal}
               />
             </div>
           </form>
         </div>
       </div>
 
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
+      <AuthModal isOpen={showAuthModal} onClose={closeAuthModal} />
 
       <ShareModal
         isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
+        onClose={closeShareModal}
         chatId={currentChatId}
         chatTitle={currentChat?.title}
       />
 
       <ApiKeyModal
         isOpen={showApiKeyModal}
-        onClose={() => setShowApiKeyModal(false)}
+        onClose={closeApiKeyModal}
         user={user}
         onSave={(provider, apiKey, keyData, synced) => {
           if (provider === 'openrouter') {
@@ -1355,7 +1334,7 @@ export default function Chat() {
 
       <ConfirmationModal
         isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
+        onClose={closeDeleteConfirm}
         onConfirm={handleConfirmDelete}
         title="Delete Chat"
         message="Are you sure you want to delete this chat? This action cannot be undone."
