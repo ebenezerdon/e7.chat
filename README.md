@@ -2,6 +2,8 @@
 
 > The open-source alternative to ChatGPT
 
+Live url: [https://e7.chat](https://e7.chat)
+
 A modern, full-featured AI chat application built with Next.js, featuring multi-provider AI model access, image generation, user authentication, chat sharing, branching conversations, file attachments, and cloud synchronization.
 
 ## ✨ Features
