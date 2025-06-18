@@ -125,3 +125,15 @@ export const loadCurrentChat = async (user, currentChatId, setCurrentChat) => {
     setCurrentChat(null)
   }
 }
+
+/**
+ * Finds an unused "New Chat" in the provided chats array
+ * @param {Array} chats - Array of chat objects
+ * @returns {Object|undefined} - The unused new chat or undefined if none found
+ */
+export const findUnusedNewChat = (chats) =>
+  chats?.find(
+    (chat) =>
+      chat.title === 'New Chat' &&
+      (chat.messageCount === 0 || chat.messageCount === undefined),
+  )
