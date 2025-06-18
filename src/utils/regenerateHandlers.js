@@ -1,5 +1,5 @@
 import { createChat, saveMessage } from '../lib/db'
-import { generateVersionedTitle } from './chatHelpers'
+import { generateVersionedTitle, loadChats } from './chatHelpers'
 
 /**
  * Handles regenerating AI responses with optional chat branching
@@ -16,7 +16,8 @@ import { generateVersionedTitle } from './chatHelpers'
  * @param {Function} setCurrentChatId - Function to set current chat ID
  * @param {Function} setCurrentChat - Function to set current chat
  * @param {Function} setSavingMessages - Function to set saving messages
- * @param {Function} loadChats - Function to load chats
+ * @param {Function} setChatsData - Function to set chats data
+ * @param {Function} setChatsLoading - Function to set chats loading
  * @param {Object} router - Next.js router object
  * @returns {Promise<void>}
  */
@@ -34,7 +35,8 @@ export const handleRegenerate = async (
   setCurrentChatId,
   setCurrentChat,
   setSavingMessages,
-  loadChats,
+  setChatsData,
+  setChatsLoading,
   router,
 ) => {
   if (!user || !currentChatId || messageIndex === undefined) return
@@ -92,7 +94,7 @@ export const handleRegenerate = async (
       setMessages(messagesToRegenerate)
 
       // Update chats list to include the new chat
-      await loadChats()
+      await loadChats(user, setChatsData, setChatsLoading)
     }
 
     // Make API call with the selected model

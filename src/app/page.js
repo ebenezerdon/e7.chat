@@ -35,7 +35,12 @@ import ShareModal from '@/components/ShareModal'
 import ApiKeyModal from '@/components/ApiKeyModal'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { detectImageRequest } from '../utils/imageDetection'
-import { generateVersionedTitle, generateTitle } from '../utils/chatHelpers'
+import {
+  generateVersionedTitle,
+  generateTitle,
+  loadChats,
+  loadCurrentChat,
+} from '../utils/chatHelpers'
 import { handleImageGeneration } from '../utils/imageHandlers'
 import { handleRegenerate } from '../utils/regenerateHandlers'
 import { useApiKeys } from '../hooks/useApiKeys'
@@ -159,23 +164,8 @@ export default function Chat() {
     },
   })
 
-  const loadChats = useCallback(async () => {
-    if (!user) {
-      setChatsData([])
-      setChatsLoading(false)
-      return
-    }
-
-    try {
-      setChatsLoading(true)
-      const chats = await getChatsCostOptimized(user)
-      setChatsData(chats)
-    } catch (error) {
-      console.error('Failed to load chats:', error)
-      setChatsData([])
-    } finally {
-      setChatsLoading(false)
-    }
+  const loadChatsCallback = useCallback(async () => {
+    await loadChats(user, setChatsData, setChatsLoading)
   }, [user])
 
   const initializeNewChat = useCallback(
@@ -319,24 +309,8 @@ export default function Chat() {
     [user, router, chatsData, setMessages, getChatsCostOptimized],
   )
 
-  const loadCurrentChat = useCallback(async () => {
-    if (!user || !currentChatId) {
-      setCurrentChat(null)
-      return
-    }
-
-    // Don't try to load optimistic chats from database
-    if (currentChatId.startsWith('temp-')) {
-      return
-    }
-
-    try {
-      const chat = await getChat(user, currentChatId)
-      setCurrentChat(chat)
-    } catch (error) {
-      console.error('Failed to load current chat:', error)
-      setCurrentChat(null)
-    }
+  const loadCurrentChatCallback = useCallback(async () => {
+    await loadCurrentChat(user, currentChatId, setCurrentChat)
   }, [user, currentChatId])
 
   // Create chat handlers
@@ -353,7 +327,7 @@ export default function Chat() {
     setCurrentChatId,
     setCurrentChat,
     setChatsData,
-    loadChats,
+    loadChats: loadChatsCallback,
     initializeNewChat,
     openDeleteConfirm,
   })
@@ -466,13 +440,13 @@ export default function Chat() {
 
   // Load chats when user logs in or out
   useEffect(() => {
-    loadChats()
-  }, [loadChats])
+    loadChatsCallback()
+  }, [loadChatsCallback])
 
   // Load current chat details when currentChatId changes
   useEffect(() => {
-    loadCurrentChat()
-  }, [loadCurrentChat])
+    loadCurrentChatCallback()
+  }, [loadCurrentChatCallback])
 
   // Handle initial chat selection from URL
   useEffect(() => {
@@ -847,7 +821,8 @@ export default function Chat() {
               setCurrentChatId,
               setCurrentChat,
               setSavingMessages,
-              loadChats,
+              setChatsData,
+              setChatsLoading,
               router,
             )
           }

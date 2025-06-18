@@ -1,4 +1,4 @@
-import { updateChatTitle } from '../lib/db'
+import { updateChatTitle, getChatsCostOptimized, getChat } from '../lib/db'
 
 /**
  * Generates a versioned title for branched chats
@@ -70,5 +70,58 @@ export const generateTitle = async (
     }
   } catch (error) {
     console.error('Error generating title', error)
+  }
+}
+
+/**
+ * Loads all chats for the current user
+ * @param {Object} user - User object
+ * @param {Function} setChatsData - Function to set chats data
+ * @param {Function} setChatsLoading - Function to set loading state
+ * @returns {Promise<void>}
+ */
+export const loadChats = async (user, setChatsData, setChatsLoading) => {
+  if (!user) {
+    setChatsData([])
+    setChatsLoading(false)
+    return
+  }
+
+  try {
+    setChatsLoading(true)
+    const chats = await getChatsCostOptimized(user)
+    setChatsData(chats)
+  } catch (error) {
+    console.error('Failed to load chats:', error)
+    setChatsData([])
+  } finally {
+    setChatsLoading(false)
+  }
+}
+
+/**
+ * Loads current chat details from database
+ * @param {Object} user - User object
+ * @param {string} currentChatId - Current chat ID
+ * @param {Function} setCurrentChat - Function to set current chat
+ * @returns {Promise<void>}
+ */
+export const loadCurrentChat = async (user, currentChatId, setCurrentChat) => {
+  if (!user || !currentChatId) {
+    setCurrentChat(null)
+    return
+  }
+
+  // Don't try to load optimistic chats from database
+  if (currentChatId.startsWith('temp-')) {
+    return
+  }
+
+  try {
+    const chat = await getChat(user, currentChatId)
+    setCurrentChat(chat)
+  } catch (error) {
+    console.error('Failed to load current chat:', error)
+    setCurrentChat(null)
   }
 }
