@@ -10,8 +10,6 @@ import {
   deleteChat,
   getChat,
   getChatsCostOptimized,
-  saveUserPreference,
-  getUserPreferences,
   getChats,
 } from '../lib/db'
 import { databases, DATABASE_ID, account } from '../lib/appwrite'
@@ -39,6 +37,7 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 import { detectImageRequest } from '../utils/imageDetection'
 import { generateVersionedTitle } from '../utils/chatHelpers'
 import { useApiKeys } from '../hooks/useApiKeys'
+import { useUserPreferences } from '../hooks/useUserPreferences'
 
 export default function Chat() {
   const router = useRouter()
@@ -62,8 +61,8 @@ export default function Chat() {
   // File attachments state
   const [attachedFiles, setAttachedFiles] = useState(null)
 
-  // User preferences state
-  const [userPreferences, setUserPreferences] = useState({})
+  // User preferences management
+  const { userPreferences, savePreference } = useUserPreferences(user, account)
 
   // Function to get smart default model based on preferences and API key
   const getDefaultModel = () => {
@@ -664,11 +663,7 @@ export default function Chat() {
     // Save user preference if user is logged in
     if (user) {
       try {
-        await saveUserPreference(account, 'lastUsedModel', newModel)
-        setUserPreferences((prev) => ({
-          ...prev,
-          lastUsedModel: newModel,
-        }))
+        await savePreference('lastUsedModel', newModel)
       } catch (error) {
         console.error('Failed to save model preference:', error)
         // Continue anyway - don't block user from using the model
@@ -864,29 +859,12 @@ export default function Chat() {
     }
   }
 
-  // Load user preferences when user logs in
+  // Update selected model when preferences change
   useEffect(() => {
-    const loadUserPreferences = async () => {
-      if (user) {
-        try {
-          const preferences = await getUserPreferences(account)
-          setUserPreferences(preferences)
-
-          // Update selected model if user has a saved preference
-          if (preferences.lastUsedModel) {
-            setSelectedModel(preferences.lastUsedModel)
-          }
-        } catch (error) {
-          console.error('Failed to load user preferences:', error)
-        }
-      } else {
-        // Clear preferences when user logs out
-        setUserPreferences({})
-      }
+    if (userPreferences.lastUsedModel) {
+      setSelectedModel(userPreferences.lastUsedModel)
     }
-
-    loadUserPreferences()
-  }, [user])
+  }, [userPreferences.lastUsedModel])
 
   // Load chats when user logs in or out
   useEffect(() => {
