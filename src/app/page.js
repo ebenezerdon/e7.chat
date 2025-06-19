@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useChat } from '@ai-sdk/react'
+import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom'
 import {
   createChat,
   getChatMessages,
@@ -22,6 +23,7 @@ import {
   Share2,
   Key,
   CornerUpRight,
+  ArrowDown,
 } from 'lucide-react'
 import ChatThread from '@/components/ChatThread'
 import '../styles/page.css'
@@ -52,6 +54,23 @@ import { useModals } from '../hooks/useModals'
 import { useChatState } from '../hooks/useChatState'
 import { useModelSelection } from '../hooks/useModelSelection'
 import { createChatHandlers } from '../utils/chatHandlers'
+
+// Scroll to bottom button component
+const ScrollToBottomButton = () => {
+  const { isAtBottom, scrollToBottom } = useStickToBottomContext()
+
+  if (isAtBottom) return null
+
+  return (
+    <button
+      onClick={() => scrollToBottom()}
+      className="scroll-to-bottom-button"
+      aria-label="Scroll to bottom"
+    >
+      <ArrowDown size={18} strokeWidth={1.5} />
+    </button>
+  )
+}
 
 export default function Chat() {
   const router = useRouter()
@@ -507,13 +526,6 @@ export default function Chat() {
     loadChatMessages(user, currentChatId, setMessages)
   }, [user, currentChatId, setMessages])
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    if (chatThreadRef.current && messages.length > 0) {
-      chatThreadRef.current.scrollTop = chatThreadRef.current.scrollHeight
-    }
-  }, [messages, currentChatId])
-
   if (authLoading || chatsLoading) {
     return <div className="loading-state"></div>
   }
@@ -766,35 +778,46 @@ export default function Chat() {
           </div>
         </div>
 
-        <ChatThread
-          messages={messages}
-          status={status}
-          chatThreadRef={chatThreadRef}
-          savingMessages={savingMessages}
-          onRegenerate={(messageIndex, modelId, createNewChat = false) =>
-            handleRegenerate(
-              messageIndex,
-              modelId,
-              createNewChat,
-              user,
-              currentChatId,
-              currentChat,
-              messages,
-              userApiKey,
-              setRegeneratingMessageIndex,
-              setMessages,
-              setCurrentChatId,
-              setCurrentChat,
-              setSavingMessages,
-              setChatsData,
-              setChatsLoading,
-              router,
-            )
-          }
-          regeneratingMessageIndex={regeneratingMessageIndex}
-          hasApiKey={!!userApiKey}
-          onApiKeyRequired={openApiKeyModal}
-        />
+        <StickToBottom
+          className="flex-1 overflow-y-auto relative"
+          resize="smooth"
+          initial="smooth"
+        >
+          <StickToBottom.Content>
+            <ChatThread
+              messages={messages}
+              status={status}
+              chatThreadRef={chatThreadRef}
+              savingMessages={savingMessages}
+              onRegenerate={(messageIndex, modelId, createNewChat = false) =>
+                handleRegenerate(
+                  messageIndex,
+                  modelId,
+                  createNewChat,
+                  user,
+                  currentChatId,
+                  currentChat,
+                  messages,
+                  userApiKey,
+                  setRegeneratingMessageIndex,
+                  setMessages,
+                  setCurrentChatId,
+                  setCurrentChat,
+                  setSavingMessages,
+                  setChatsData,
+                  setChatsLoading,
+                  router,
+                )
+              }
+              regeneratingMessageIndex={regeneratingMessageIndex}
+              hasApiKey={!!userApiKey}
+              onApiKeyRequired={openApiKeyModal}
+            />
+          </StickToBottom.Content>
+
+          {/* Scroll to bottom button */}
+          <ScrollToBottomButton />
+        </StickToBottom>
 
         <div className="input-area">
           {/* Attachments display above input */}

@@ -200,7 +200,7 @@
 
 /* Message Container */
 .message-container {
-  @apply flex-1 overflow-y-auto pt-6 sm:pt-10 pb-[7vh] sm:pb-[10vh] px-4 sm:px-10 bg-gradient-to-b from-[#1a1e24]/30 to-[#1e2329]/30;
+  @apply flex-1 overflow-y-auto pt-6 sm:pt-10 pb-[25vh] sm:pb-[10vh] px-4 sm:px-10 bg-gradient-to-b from-[#1a1e24]/30 to-[#1e2329]/30;
 }
 
 .message-wrapper {
@@ -634,7 +634,7 @@
     -webkit-overflow-scrolling: touch;
     padding: 1rem;
     padding-top: 1rem;
-    padding-bottom: calc(15vh + 4rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(30vh + 4rem + env(safe-area-inset-bottom, 0));
     will-change: transform;
   }
 
@@ -1446,4 +1446,40 @@
   margin: 0;
   color: #9ca3af;
   font-size: 14px;
+}
+
+/* Scroll to bottom button */
+.scroll-to-bottom-button {
+  position: absolute;
+  bottom: 20px;
+  left: 46%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: linear-gradient(to right, #2c313a, #2e333d);
+  color: #9ca3af;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 3px 15px rgba(59, 130, 246, 0.12);
+}
+
+.scroll-to-bottom-button:hover {
+  background: linear-gradient(to right, #2c313a, #2e333d);
+  color: #e5e7eb;
+  border: 1px solid rgba(59, 130, 246, 0.7);
+  transform: translateX(-50%) translateY(-1px);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2);
+}
+
+@media (max-width: 640px) {
+  .scroll-to-bottom-button {
+    display: none;
+  }
 }

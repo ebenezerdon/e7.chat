@@ -383,7 +383,7 @@ const ChatThread = ({
   }
 
   return (
-    <div ref={chatThreadRef} className="message-container">
+    <div className="flex flex-col pt-6 sm:pt-10 pb-[25vh] sm:pb-[10vh] px-4 sm:px-10 bg-gradient-to-b from-[#1a1e24]/30 to-[#1e2329]/30">
       {messages.length === 0 ? (
         <Message {...welcomeMessage} />
       ) : (
