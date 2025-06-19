@@ -1483,3 +1483,83 @@
     display: none;
   }
 }
+
+/* PWA Install button */
+.pwa-install-button {
+  position: fixed;
+  bottom: 170px;
+  right: 35px;
+  z-index: 10;
+  background: linear-gradient(to right, #2c313a, #2e333d);
+  color: #9ca3af;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 20px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 3px 15px rgba(59, 130, 246, 0.12);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pwa-install-button:hover {
+  background: linear-gradient(to right, #2c313a, #2e333d);
+  color: #e5e7eb;
+  border: 1px solid rgba(59, 130, 246, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2);
+}
+
+@media (max-width: 640px) {
+  .pwa-install-button {
+    display: none; /* Hide the global button on mobile */
+  }
+
+  .pwa-install-button-mobile {
+    background: linear-gradient(to right, #2c313a, #2e333d);
+    color: #9ca3af;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 3px 15px rgba(59, 130, 246, 0.12);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    position: fixed;
+    top: 16px;
+    left: 72px; /* Positioned right next to hamburger menu (16px + 40px + 16px) */
+    z-index: 50;
+  }
+
+  .pwa-install-button-mobile:hover {
+    background: linear-gradient(to right, #2c313a, #2e333d);
+    color: #e5e7eb;
+    border: 1px solid rgba(59, 130, 246, 0.7);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2);
+  }
+}
+
+/* Very small screens - icon only */
+@media (max-width: 314px) {
+  .pwa-install-button-mobile {
+    padding: 8px; /* More compact padding */
+    width: 40px; /* Same size as hamburger menu */
+    height: 40px;
+  }
+
+  .pwa-install-button-mobile span {
+    display: none; /* Hide the "install" text */
+  }
+}

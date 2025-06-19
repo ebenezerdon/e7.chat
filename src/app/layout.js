@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Providers from '../components/Providers'
+import PWAInstallPrompt from '../components/PWAInstallPrompt'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -17,6 +18,16 @@ export const metadata = {
   description: 'The open-source alternative to ChatGPT',
   manifest: '/manifest.json',
   themeColor: '#1a1e24',
+  viewport:
+    'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, user-scalable=yes',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'e7.chat',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '16x16 32x32 48x48' },
@@ -39,12 +50,29 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#1a1e24" />
         <meta name="msapplication-TileColor" content="#1a1e24" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, user-scalable=yes"
+        />
+
+        {/* PWA Meta Tags */}
+        <meta name="application-name" content="e7.chat" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <meta name="apple-mobile-web-app-title" content="e7.chat" />
+        <meta name="msapplication-starturl" content="/" />
+        <meta name="msapplication-TileImage" content="/icon-144x144.png" />
+        <meta name="format-detection" content="telephone=no" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>{children}</Providers>
+        <PWAInstallPrompt />
       </body>
     </html>
   )
