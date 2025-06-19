@@ -42,7 +42,7 @@
 
 /* Mobile Menu Button */
 .mobile-menu-button {
-  @apply fixed top-2.5 left-4 z-50 w-10 h-10 rounded-lg bg-gradient-to-br from-[#2c313a] to-[#2e333d] border border-[#3a404b]/30 flex items-center justify-center sm:hidden;
+  @apply fixed top-4 left-4 z-50 w-10 h-10 rounded-lg bg-gradient-to-br from-[#2c313a] to-[#2e333d] border border-[#3a404b]/30 flex items-center justify-center sm:hidden;
 }
 
 .mobile-menu-icon {

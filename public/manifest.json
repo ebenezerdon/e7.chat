@@ -9,6 +9,9 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "categories": ["productivity", "utilities", "education"],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icon-72x72.png",
