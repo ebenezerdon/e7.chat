@@ -16,6 +16,7 @@ import { databases, DATABASE_ID, account } from '../lib/appwrite'
 import { useRouter } from 'next/navigation'
 import {
   SendHorizontal,
+  Square,
   MinusCircle,
   LogIn,
   Share2,
@@ -120,6 +121,7 @@ export default function Chat() {
     setMessages,
     setInput,
     status,
+    stop,
   } = useChat({
     body: {
       model: selectedModel,
@@ -829,31 +831,65 @@ export default function Chat() {
                 placeholder={
                   currentChatId?.startsWith('temp-')
                     ? 'Creating chat...'
+                    : status === 'submitted' || status === 'streaming'
+                    ? 'AI is thinking...'
                     : 'Message AI Assistant or ask to generate an image...'
                 }
                 onChange={handleInputChange}
                 disabled={
-                  (status !== 'ready' && status !== undefined) ||
+                  status === 'submitted' ||
+                  status === 'streaming' ||
                   currentChatId?.startsWith('temp-')
                 }
                 className="input-field"
                 aria-label="Chat input"
               />
 
-              {/* Single send button - always beside input */}
-              <button
-                type="submit"
-                disabled={
-                  !input.trim() ||
-                  status === 'submitted' ||
-                  status === 'streaming' ||
-                  currentChatId?.startsWith('temp-')
-                }
-                className="submit-button"
-                aria-label="Send message"
-              >
-                <SendHorizontal className="submit-icon" strokeWidth={1.5} />
-              </button>
+              {/* Send/Stop button - changes based on streaming status */}
+              {status === 'submitted' || status === 'streaming' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    stop()
+                    // Save partial message when stopped
+                    if (messages.length > 0) {
+                      const lastMessage = messages[messages.length - 1]
+                      if (
+                        lastMessage.role === 'assistant' &&
+                        lastMessage.content &&
+                        currentChatId &&
+                        user
+                      ) {
+                        saveMessage(
+                          user,
+                          currentChatId,
+                          lastMessage.role,
+                          lastMessage.content,
+                          selectedModel,
+                        ).catch((error) => {
+                          console.error(
+                            'Failed to save partial message:',
+                            error,
+                          )
+                        })
+                      }
+                    }
+                  }}
+                  className="submit-button stop-button"
+                  aria-label="Stop generation"
+                >
+                  <Square className="submit-icon" strokeWidth={1.5} />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!input.trim() || currentChatId?.startsWith('temp-')}
+                  className="submit-button"
+                  aria-label="Send message"
+                >
+                  <SendHorizontal className="submit-icon" strokeWidth={1.5} />
+                </button>
+              )}
             </div>
 
             {/* Mobile model selector row - only shown on mobile */}
