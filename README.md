@@ -203,12 +203,12 @@ Through OpenRouter, you have access to:
 
 ### Scripts
 
-````bash
+```bash
 npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
-```          |
+```
 
 ## 🤝 Contributing
 
@@ -240,4 +240,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ---
 
 Built by [Ebenezer Don](https://github.com/ebenezerdon)
-````
+
+```
+
+```
