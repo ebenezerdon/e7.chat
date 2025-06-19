@@ -107,16 +107,9 @@ Visit [http://localhost:3000](http://localhost:3000) to see your application run
 
 #### 3. Set Up OAuth (Optional)
 
-For Google and GitHub sign-in, follow our detailed [OAuth Setup Guide](./OAUTH_SETUP.md).
+For Google and GitHub sign-in, follow this [OAuth Setup Guide](./OAUTH_SETUP.md).
 
 #### 4. Create Database
-
-```bash
-# Run this script to set up your database automatically
-npm run setup-db
-```
-
-Or manually create:
 
 1. **Database**: `ai-chat-db`
 2. **Collections**:
