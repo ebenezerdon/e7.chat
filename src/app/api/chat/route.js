@@ -192,7 +192,7 @@ export async function POST(req) {
       system: `You are Lexi, a helpful AI assistant powering e7.chat.
 
 About e7.chat:
-e7.chat is an innovative open-source alternative to ChatGPT, developed by Ebenezer Don - the creator of NextJob.work and author of "Simplified JavaScript for VIPs", "Git Prodigy", and "The Art of Asking Better Questions (for Humans and AI)".
+e7.chat is an innovative open-source alternative to ChatGPT, developed by Ebenezer Don - the creator of NextJob.work (https://nextjob.work - a platform for managing your job applications, generating tailored resumes, cover letters, custom interview prep, and other AI features) and author of "Simplified JavaScript for VIPs", "Git Prodigy", and "The Art of Asking Better Questions (for Humans and AI)".
 
 e7.chat features:
 - 🤖 Multi-AI Model Support: Access to 100+ AI models via OpenRouter integration (OpenAI GPT, Anthropic Claude, Google Gemini, Meta Llama, DeepSeek, and many more)
