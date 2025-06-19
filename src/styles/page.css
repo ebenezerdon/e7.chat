@@ -341,7 +341,22 @@
 }
 
 .submit-button {
-  @apply bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 transition-all rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center disabled:opacity-50 ml-2 sm:ml-4 self-center shadow-md;
+  @apply bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 transition-all rounded-lg w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center disabled:opacity-50 ml-2 sm:ml-4 self-center shadow-md cursor-pointer;
+}
+
+.submit-button.stop-button {
+  @apply bg-gradient-to-br from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(107, 114, 128, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(107, 114, 128, 0);
+  }
 }
 
 .submit-icon {
